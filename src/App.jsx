@@ -286,6 +286,7 @@ function App() {
               <Stats 
                 collection={collection} 
                 lang={settings.lang}
+                settings={settings}
               />
             )}
           </motion.div>

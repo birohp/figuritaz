@@ -1,10 +1,24 @@
-import { CATEGORIES, calculateStats } from '../lib/stickers';
+import { CATEGORIES, calculateStats, ACHIEVEMENTS, getAchievements, calculateCompletionEstimate } from '../lib/stickers';
 import { translations } from '../lib/translations';
-import { Trophy, Users, BarChart3, LayoutGrid, Star, Sparkles } from 'lucide-react';
+import { 
+  Trophy, Users, BarChart3, LayoutGrid, Star, Sparkles, 
+  Footprints, User, Award, Zap, Shield, RefreshCcw, 
+  Calculator, TrendingUp, Wallet, CheckCircle 
+} from 'lucide-react';
 
-function Stats({ collection, lang = 'pt' }) {
+function Stats({ collection, lang = 'pt', settings }) {
   const t = translations[lang];
   const stats = calculateStats(collection);
+  const unlockedAchievements = getAchievements(collection);
+  
+  // Dynamic icons mapping for achievements
+  const IconMap = {
+    Footprints, User, Award, Sparkles, Zap, Shield, Trophy, RefreshCcw
+  };
+
+  const estimatedPacks = calculateCompletionEstimate(stats.coladas, stats.total);
+  const estimatedCost = estimatedPacks * (settings?.packetPrice || 4.00);
+  const currencySymbol = settings?.country === 'BR' ? 'R$' : '$';
 
   // Calculate stats per category (Individual Sections)
 // ... (omitted same as before)
@@ -86,6 +100,61 @@ function Stats({ collection, lang = 'pt' }) {
             <p className="text-[9px] font-bold text-text-dim uppercase text-center tracking-tighter opacity-70">
               {lang === 'pt' ? 'Inclui todos os FWC e os nº 1 de cada país' : lang === 'en' ? 'Includes all FWC and #1 from each country' : 'Incluye todos los FWC y los nº 1 de cada país'}
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Achievements Section */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
+          <Award className="text-yellow-500" size={18} />
+          {t.achievements}
+        </h2>
+        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 scrollbar-hide px-1">
+          {ACHIEVEMENTS.map(ach => {
+            const isUnlocked = unlockedAchievements.has(ach.id);
+            const Icon = IconMap[ach.icon] || Award;
+            return (
+              <div 
+                key={ach.id} 
+                className={`flex-shrink-0 w-24 flex flex-col items-center gap-2 transition-all duration-500 ${isUnlocked ? 'scale-100' : 'opacity-30 grayscale blur-[0.5px] scale-90'}`}
+              >
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 shadow-lg relative ${isUnlocked ? 'bg-gradient-to-br from-yellow-400 to-amber-600 border-yellow-200' : 'bg-surface-color border-surface-border'}`}>
+                  <Icon size={24} className={isUnlocked ? 'text-white' : 'text-text-dim'} />
+                  {isUnlocked && <div className="absolute inset-0 rounded-full animate-ping-slow bg-yellow-400/20" />}
+                </div>
+                <div className="text-center">
+                  <p className={`text-[9px] font-black uppercase leading-tight ${isUnlocked ? 'text-text-color' : 'text-text-dim'}`}>{ach.name}</p>
+                  <p className="text-[7px] font-bold text-text-dim leading-tight mt-0.5">{ach.description}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Completion Estimate Card */}
+      <section className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="glass-card p-4 border-l-4 border-l-secondary relative overflow-hidden group shadow-lg">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Calculator size={48} className="text-secondary" />
+            </div>
+            <p className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1">{t.estimateTitle}</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-text-color">{estimatedPacks}</span>
+              <span className="text-[10px] font-bold text-text-dim uppercase">{t.packsToBuy}</span>
+            </div>
+          </div>
+          
+          <div className="glass-card p-4 border-l-4 border-l-primary relative overflow-hidden group shadow-lg">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Wallet size={48} className="text-primary" />
+            </div>
+            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{t.estimatedCost}</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-text-color">{currencySymbol} {estimatedCost.toFixed(2)}</span>
+            </div>
           </div>
         </div>
       </section>

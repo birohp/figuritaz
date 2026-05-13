@@ -86,3 +86,63 @@ export const calculateStats = (collection) => {
     porcentagemBrilhantes
   };
 };
+
+export const ACHIEVEMENTS = [
+  { id: 'first_10', name: 'Primeiros Passos', description: 'Cole 10 figurinhas', icon: 'Footprints' },
+  { id: 'first_50', name: 'Colecionador Casual', description: 'Cole 50 figurinhas', icon: 'User' },
+  { id: 'century', name: 'O Centenário', description: 'Cole 100 figurinhas', icon: 'Award' },
+  { id: 'shiny_5', name: 'Brilho Inicial', description: 'Cole 5 figurinhas brilhantes', icon: 'Sparkles' },
+  { id: 'shiny_15', name: 'Mestre do Brilho', description: 'Cole 15 figurinhas brilhantes', icon: 'Zap' },
+  { id: 'team_complete', name: 'Técnico', description: 'Complete 1 seleção inteira', icon: 'Shield' },
+  { id: 'group_complete', name: 'Campeão de Grupo', description: 'Complete 1 grupo inteiro', icon: 'Trophy' },
+  { id: 'repeated_10', name: 'Negociador', description: 'Tenha 10 figurinhas repetidas', icon: 'RefreshCcw' }
+];
+
+export const getAchievements = (collection) => {
+  const stats = calculateStats(collection);
+  const collectedCodes = Object.keys(collection).filter(code => collection[code].status === 'collected');
+  
+  const unlocked = new Set();
+
+  if (stats.coladas >= 10) unlocked.add('first_10');
+  if (stats.coladas >= 50) unlocked.add('first_50');
+  if (stats.coladas >= 100) unlocked.add('century');
+  if (stats.coladasBrilhantes >= 5) unlocked.add('shiny_5');
+  if (stats.coladasBrilhantes >= 15) unlocked.add('shiny_15');
+  if (stats.repetidas >= 10) unlocked.add('repeated_10');
+
+  // Check if any team is complete
+  for (const cat of CATEGORIES) {
+    if (cat.stickers.every(code => collection[code]?.status === 'collected')) {
+      unlocked.add('team_complete');
+      break;
+    }
+  }
+
+  // Check if any group is complete
+  const groups = [...new Set(CATEGORIES.map(c => c.group))];
+  for (const group of groups) {
+    const groupStickers = CATEGORIES.filter(c => c.group === group).flatMap(c => c.stickers);
+    if (groupStickers.every(code => collection[code]?.status === 'collected')) {
+      unlocked.add('group_complete');
+      break;
+    }
+  }
+
+  return unlocked;
+};
+
+export const calculateCompletionEstimate = (coladas, total, stickersPerPack = 7) => {
+  if (coladas >= total) return 0;
+  
+  // Mathematical estimate based on Coupon Collector's Problem variation
+  // Expected packs = (T/7) * sum(1/i) for i from 1 to (T-C)
+  const missing = total - coladas;
+  let harmonicSum = 0;
+  for (let i = 1; i <= missing; i++) {
+    harmonicSum += 1 / i;
+  }
+  
+  const expectedPacks = (total / stickersPerPack) * harmonicSum;
+  return Math.ceil(expectedPacks);
+};

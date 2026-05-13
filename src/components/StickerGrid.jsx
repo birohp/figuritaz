@@ -38,6 +38,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
   const t = translations[lang];
 
   const toggleSticker = (number) => {
@@ -67,9 +68,19 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
   const categoriesInGroup = selectedGroup ? CATEGORIES.filter(c => c.group === selectedGroup) : [];
   const currentCategory = CATEGORIES.find(c => c.id === selectedCategory);
 
-  const filteredStickers = searchTerm
+  let filteredStickers = searchTerm
     ? ALL_VALID_CODES.filter(code => code.toLowerCase().includes(searchTerm.toLowerCase()))
     : currentCategory?.stickers || [];
+
+  if (activeFilter !== 'all') {
+    filteredStickers = filteredStickers.filter(code => {
+      const data = collection[code] || { status: 'none', repeated: 0 };
+      if (activeFilter === 'missing') return data.status !== 'collected';
+      if (activeFilter === 'repeated') return data.repeated > 0;
+      if (activeFilter === 'shiny') return SHINY_CODES.includes(code);
+      return true;
+    });
+  }
 
   const handleGroupSelect = (group) => {
     setSelectedGroup(group);
@@ -99,6 +110,28 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+      </div>
+
+      {/* Quick Filters */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {[
+          { id: 'all', label: t.filterAll },
+          { id: 'missing', label: t.filterMissing },
+          { id: 'repeated', label: t.filterRepeated },
+          { id: 'shiny', label: t.filterShiny }
+        ].map(f => (
+          <button
+            key={f.id}
+            onClick={() => setActiveFilter(f.id)}
+            className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shadow-sm ${
+              activeFilter === f.id
+                ? 'bg-primary border-primary text-white shadow-primary/20'
+                : 'bg-surface-color border-surface-border text-text-dim hover:text-white'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {/* Group View */}
