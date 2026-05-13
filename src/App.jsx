@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { auth, googleProvider, db } from './lib/firebase';
 import { signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
-import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3, Award } from 'lucide-react';
+import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3, Award, Heart, Coffee, ExternalLink } from 'lucide-react';
+import AdBanner from './components/AdBanner';
 import Dashboard from './components/Dashboard';
 import StickerGrid from './components/StickerGrid';
 import Stats from './components/Stats';
@@ -301,6 +302,8 @@ function App() {
         </AnimatePresence>
       </main>
 
+      <AdBanner lang={settings.lang} />
+
       {/* Navigation Bar */}
       <div className="fixed bottom-8 left-0 right-0 flex justify-center z-40 px-4">
         <nav className="glass-card p-1.5 rounded-full flex gap-0.5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-2xl">
@@ -451,6 +454,60 @@ function App() {
                     />
                   ))}
                 </div>
+              </div>
+
+              {/* Support Project */}
+              <div className="pt-6 border-t border-white/10 space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Heart size={18} fill="currentColor" />
+                  <h3 className="font-black uppercase tracking-tight text-sm">Apoie o Projeto</h3>
+                </div>
+                <p className="text-[10px] font-medium text-text-dim leading-relaxed">
+                  Gostou do FiguritaZ? Sua contribuição ajuda a manter o servidor online e a desenvolver novas funções táticas!
+                </p>
+                
+                {settings.country === 'BR' ? (
+                  <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">Pague via PIX</span>
+                      <Coffee size={16} className="text-primary" />
+                    </div>
+                    <div className="bg-black/20 p-3 rounded-xl break-all">
+                      <code className="text-[10px] font-mono text-text-color">54e4b9ff-cff0-4aa3-be5b-cfa9bd4800c9</code>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText('54e4b9ff-cff0-4aa3-be5b-cfa9bd4800c9');
+                        alert('Chave PIX copiada!');
+                      }}
+                      className="w-full py-2 bg-primary text-white rounded-lg text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
+                    >
+                      Copiar Chave PIX
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-[#004481]/10 border border-[#004481]/20 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-[#004481] uppercase tracking-widest">Transferencia CLABE (BBVA)</span>
+                      <Coffee size={16} className="text-[#004481]" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold text-text-dim uppercase tracking-tighter">Tarcisio Fernandes</p>
+                      <div className="bg-black/20 p-3 rounded-xl break-all">
+                        <code className="text-[10px] font-mono text-text-color">012225015122793574</code>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText('012225015122793574');
+                        alert('CLABE copiada!');
+                      }}
+                      className="w-full py-2 bg-[#004481] text-white rounded-lg text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
+                    >
+                      Copiar CLABE
+                    </button>
+                  </div>
+                )}
               </div>
 
               <button 

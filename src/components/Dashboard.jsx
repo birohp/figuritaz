@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { calculateStats, ALL_VALID_CODES, SHINY_CODES, calculateCompletionEstimate } from '../lib/stickers';
-import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet } from 'lucide-react';
+import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet, ExternalLink } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { motion, AnimatePresence } from 'framer-motion';
 
