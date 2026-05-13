@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { auth, googleProvider, db } from './lib/firebase';
 import { signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
-import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3, Award } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import StickerGrid from './components/StickerGrid';
 import Stats from './components/Stats';
+import Achievements from './components/Achievements';
 import { translations } from './lib/translations';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -290,6 +291,12 @@ function App() {
                 settings={settings}
               />
             )}
+            {activeTab === 'achievements' && (
+              <Achievements 
+                collection={collection} 
+                lang={settings.lang}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -314,6 +321,12 @@ function App() {
             onClick={() => setActiveTab('stats')}
             icon={<BarChart3 size={22} />}
             label={t.stats}
+          />
+          <NavButton 
+            active={activeTab === 'achievements'} 
+            onClick={() => setActiveTab('achievements')}
+            icon={<Award size={22} />}
+            label={t.achievements}
           />
         </nav>
       </div>

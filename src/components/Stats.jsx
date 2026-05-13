@@ -1,21 +1,14 @@
-import { CATEGORIES, calculateStats, ACHIEVEMENTS, getAchievements, calculateCompletionEstimate } from '../lib/stickers';
+import { CATEGORIES, calculateStats, calculateCompletionEstimate } from '../lib/stickers';
 import { translations } from '../lib/translations';
 import { 
   Trophy, Users, BarChart3, LayoutGrid, Star, Sparkles, 
-  Footprints, User, Award, Zap, Shield, RefreshCcw, 
   Calculator, TrendingUp, Wallet, CheckCircle 
 } from 'lucide-react';
 
 function Stats({ collection, lang = 'pt', settings }) {
   const t = translations[lang];
   const stats = calculateStats(collection);
-  const unlockedAchievements = getAchievements(collection);
   
-  // Dynamic icons mapping for achievements
-  const IconMap = {
-    Footprints, User, Award, Sparkles, Zap, Shield, Trophy, RefreshCcw
-  };
-
   const estimate = calculateCompletionEstimate(stats.coladas, stats.total);
   const remainingCost = estimate.remaining * (settings?.packetPrice || 4.00);
   const totalCost = estimate.total * (settings?.packetPrice || 4.00);
@@ -105,33 +98,6 @@ function Stats({ collection, lang = 'pt', settings }) {
         </div>
       </section>
 
-      {/* Achievements Section */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
-          <Award className="text-yellow-500" size={18} />
-          {t.achievements}
-        </h2>
-        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 scrollbar-hide px-1">
-          {ACHIEVEMENTS.map(ach => {
-            const isUnlocked = unlockedAchievements.has(ach.id);
-            const Icon = IconMap[ach.icon] || Award;
-            return (
-              <div 
-                key={ach.id} 
-                className={`flex-shrink-0 w-24 flex flex-col items-center gap-2 transition-all duration-500 ${isUnlocked ? 'scale-100' : 'opacity-30 grayscale blur-[0.5px] scale-90'}`}
-              >
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 shadow-lg relative ${isUnlocked ? 'bg-gradient-to-br from-yellow-400 to-amber-600 border-yellow-200' : 'bg-surface-color border-surface-border'}`}>
-                  <Icon size={24} className={isUnlocked ? 'text-white' : 'text-text-dim'} />
-                  {isUnlocked && <div className="absolute inset-0 rounded-full animate-ping-slow bg-yellow-400/20" />}
-                </div>
-                <div className="text-center">
-                  <p className={`text-[9px] font-black uppercase leading-tight ${isUnlocked ? 'text-text-color' : 'text-text-dim'}`}>{ach.name}</p>
-                  <p className="text-[7px] font-bold text-text-dim leading-tight mt-0.5">{ach.description}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </section>
 
       {/* Completion Estimate Card */}
@@ -146,9 +112,9 @@ function Stats({ collection, lang = 'pt', settings }) {
               <span className="text-3xl font-black text-text-color">{estimate.remaining}</span>
               <span className="text-[10px] font-bold text-text-dim uppercase">{t.packsToBuy}</span>
             </div>
-            <div className="mt-2 pt-2 border-t border-white/5">
-              <p className="text-[8px] font-bold text-text-dim uppercase tracking-tighter opacity-60">
-                {t.finalTotal}: <span className="text-text-color">{estimate.total} {t.packets}</span>
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <p className="text-[10px] font-black text-text-dim uppercase tracking-widest opacity-80">
+                {t.finalTotal}: <span className="text-text-color ml-1">{estimate.total} {t.packets}</span>
               </p>
             </div>
           </div>
@@ -161,9 +127,9 @@ function Stats({ collection, lang = 'pt', settings }) {
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-text-color">{currencySymbol} {remainingCost.toFixed(2)}</span>
             </div>
-            <div className="mt-2 pt-2 border-t border-white/5">
-              <p className="text-[8px] font-bold text-text-dim uppercase tracking-tighter opacity-60">
-                {t.finalTotal}: <span className="text-text-color">{currencySymbol} {totalCost.toFixed(2)}</span>
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <p className="text-[10px] font-black text-text-dim uppercase tracking-widest opacity-80">
+                {t.finalTotal}: <span className="text-text-color ml-1">{currencySymbol} {totalCost.toFixed(2)}</span>
               </p>
             </div>
           </div>
