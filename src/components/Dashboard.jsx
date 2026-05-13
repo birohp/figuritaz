@@ -19,15 +19,14 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
   const totalInvested = (packets * (settings?.packetPrice || 0)).toFixed(2);
   const currencySymbol = settings?.country === 'BR' ? 'R$' : '$';
 
-  const handleDecrementRepeated = (code) => {
+  const handleUpdateRepeated = (code, delta) => {
     const current = collection[code] || { status: 'none', repeated: 0 };
-    if (current.repeated > 0) {
-      const newCollection = {
-        ...collection,
-        [code]: { ...current, repeated: current.repeated - 1 }
-      };
-      onUpdateCollection(newCollection);
-    }
+    const newVal = Math.max(0, (current.repeated || 0) + delta);
+    const newCollection = {
+      ...collection,
+      [code]: { ...current, repeated: newVal }
+    };
+    onUpdateCollection(newCollection);
   };
 
   const repeatedStickers = Object.entries(collection)
@@ -139,7 +138,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
 
       {/* Grid of Tactical Metrics */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece">
+        <div className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece shadow-md border-white/5">
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-black text-text-color">{stats.coladas}</span>
             <span className="text-sm font-bold text-text-dim">/ {stats.total}</span>
@@ -149,10 +148,16 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
 
         <button 
           onClick={() => setIsRepeatedOpen(true)}
-          className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece active:scale-95 transition-all group hover:border-accent"
+          className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece active:scale-95 transition-all group hover:border-accent shadow-xl border-accent/20 bg-accent/5"
         >
-          <span className="text-4xl font-black text-text-color group-hover:text-accent transition-colors">{stats.repetidas}</span>
+          <div className="relative">
+            <span className="text-4xl font-black text-text-color group-hover:text-accent transition-colors">{stats.repetidas}</span>
+            <div className="absolute -top-1 -right-4 flex items-center justify-center animate-pulse">
+               <Info size={10} className="text-accent" />
+            </div>
+          </div>
           <span className="text-[10px] font-black text-text-dim uppercase tracking-widest mt-1 group-hover:text-accent transition-colors">{t.repetidas}</span>
+          <span className="text-[8px] font-bold text-accent/60 uppercase tracking-tighter mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Gerenciar</span>
         </button>
       </div>
 
@@ -356,21 +361,35 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                     <p className="text-text-dim font-bold">{lang === 'pt' ? 'Nenhuma figurinha repetida' : lang === 'en' ? 'No duplicate stickers' : 'Sin figuritas repetidas'}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     {repeatedStickers.map(([code, data]) => (
-                      <button 
+                      <div 
                         key={code}
-                        onClick={() => handleDecrementRepeated(code)}
-                        className="relative bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center gap-1 hover:bg-accent/20 hover:border-accent transition-all group active:scale-90"
+                        className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center gap-3 hover:border-accent/40 transition-all"
                       >
-                        <span className="text-xs font-black text-text-color">{code}</span>
-                        <div className="bg-accent text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                          x{data.repeated}
+                        <div className="flex flex-col items-center">
+                          <span className="text-sm font-black text-text-color tracking-tight">{code}</span>
+                          <span className="text-[10px] font-bold text-text-dim uppercase opacity-60">Repetidas</span>
                         </div>
-                        <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-accent rounded-full p-0.5">
-                          <Minus size={8} className="text-white" />
+
+                        <div className="flex items-center gap-4 bg-black/20 p-1.5 rounded-full w-full justify-between">
+                          <button 
+                            onClick={() => handleUpdateRepeated(code, -1)}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors text-text-dim"
+                          >
+                            <Minus size={16} />
+                          </button>
+                          
+                          <span className="text-lg font-black text-text-color w-6 text-center">{data.repeated}</span>
+
+                          <button 
+                            onClick={() => handleUpdateRepeated(code, 1)}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-accent/20 hover:bg-accent/30 transition-colors text-accent shadow-lg shadow-accent/10"
+                          >
+                            <Plus size={16} />
+                          </button>
                         </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 )}
