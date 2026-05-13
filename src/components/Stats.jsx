@@ -157,6 +157,9 @@ function Stats({ collection, lang = 'pt', settings }) {
             </div>
           </div>
         </div>
+        <p className="text-[8px] font-bold text-text-dim uppercase text-center tracking-widest mt-2 opacity-50">
+          {t.estimateHint}
+        </p>
       </section>
 
       {/* Groups Ranking */}
