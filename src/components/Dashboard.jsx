@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { calculateStats, ALL_VALID_CODES } from '../lib/stickers';
-import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign } from 'lucide-react';
+import { calculateStats, ALL_VALID_CODES, SHINY_CODES } from '../lib/stickers';
+import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -148,16 +148,13 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
 
         <button 
           onClick={() => setIsRepeatedOpen(true)}
-          className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece active:scale-95 transition-all group hover:border-accent shadow-xl border-accent/20 bg-accent/5"
+          className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece active:scale-95 transition-all group shadow-xl border-white/5"
         >
           <div className="relative">
-            <span className="text-4xl font-black text-text-color group-hover:text-accent transition-colors">{stats.repetidas}</span>
-            <div className="absolute -top-1 -right-4 flex items-center justify-center animate-pulse">
-               <Info size={10} className="text-accent" />
-            </div>
+            <span className="text-4xl font-black text-text-color">{stats.repetidas}</span>
           </div>
-          <span className="text-[10px] font-black text-text-dim uppercase tracking-widest mt-1 group-hover:text-accent transition-colors">{t.repetidas}</span>
-          <span className="text-[8px] font-bold text-accent/60 uppercase tracking-tighter mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Gerenciar</span>
+          <span className="text-[10px] font-black text-text-dim uppercase tracking-widest mt-1">{t.repetidas}</span>
+          <span className="text-[9px] font-black text-accent uppercase tracking-tighter mt-1 opacity-70">(Gerenciar)</span>
         </button>
       </div>
 
@@ -361,36 +358,48 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                     <p className="text-text-dim font-bold">{lang === 'pt' ? 'Nenhuma figurinha repetida' : lang === 'en' ? 'No duplicate stickers' : 'Sin figuritas repetidas'}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    {repeatedStickers.map(([code, data]) => (
-                      <div 
-                        key={code}
-                        className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center gap-3 hover:border-accent/40 transition-all"
-                      >
-                        <div className="flex flex-col items-center">
-                          <span className="text-sm font-black text-text-color tracking-tight">{code}</span>
-                          <span className="text-[10px] font-bold text-text-dim uppercase opacity-60">Repetidas</span>
-                        </div>
-
-                        <div className="flex items-center gap-4 bg-black/20 p-1.5 rounded-full w-full justify-between">
-                          <button 
-                            onClick={() => handleUpdateRepeated(code, -1)}
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors text-text-dim"
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-6 pb-6 px-1">
+                    {repeatedStickers.map(([code, data]) => {
+                      const isShiny = SHINY_CODES.includes(code);
+                      return (
+                        <div key={code} className="flex flex-col items-center gap-3">
+                          <div
+                            className={`relative aspect-square w-full rounded-full flex flex-col items-center justify-center border-2 transition-all tactical-piece ${data.status === 'collected'
+                              ? 'bg-secondary border-white text-white'
+                              : 'bg-surface-color border-white/10 text-text-dim'
+                              }`}
                           >
-                            <Minus size={16} />
-                          </button>
-                          
-                          <span className="text-lg font-black text-text-color w-6 text-center">{data.repeated}</span>
-
-                          <button 
-                            onClick={() => handleUpdateRepeated(code, 1)}
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-accent/20 hover:bg-accent/30 transition-colors text-accent shadow-lg shadow-accent/10"
-                          >
-                            <Plus size={16} />
-                          </button>
+                            {isShiny && (
+                              <div className="absolute top-0.75 left-1/2 -translate-x-1/2 drop-shadow-[0_0_3px_rgba(250,204,21,0.5)]">
+                                <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                              </div>
+                            )}
+                            {/^[A-Z]{3}13$/.test(code) && (
+                              <div className="absolute top-0.75 left-1/2 -translate-x-1/2 drop-shadow-[0_0_3px_rgba(250,204,21,0.5)]">
+                                <UsersIcon size={10} className="text-yellow-400 fill-yellow-400" />
+                              </div>
+                            )}
+                            <span className="text-[10px] font-black">{code}</span>
+                            
+                            <div className="absolute -bottom-2 left-0 right-0 flex items-center justify-center gap-1 z-30">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleUpdateRepeated(code, -1); }} 
+                                className="w-5 h-5 flex items-center justify-center rounded-full bg-accent hover:brightness-125 text-white shadow-md active:scale-90"
+                              >
+                                <Minus size={10} />
+                              </button>
+                              <span className="text-[9px] font-black min-w-[14px] text-center bg-black/80 px-1 rounded-full text-white border border-white/20">{data.repeated || 0}</span>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleUpdateRepeated(code, 1); }} 
+                                className="w-5 h-5 flex items-center justify-center rounded-full bg-primary hover:brightness-125 text-white shadow-md active:scale-90"
+                              >
+                                <Plus size={10} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
