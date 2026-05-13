@@ -54,12 +54,35 @@ export const CATEGORIES = [
 export const TOTAL_STICKERS = 994;
 
 export const ALL_VALID_CODES = CATEGORIES.flatMap(cat => cat.stickers);
+
+export const SHINY_CODES = ALL_VALID_CODES.filter(code => {
+  // Sticker 00 and all FWC stickers are shiny
+  if (code === '00' || code.startsWith('FWC')) return true;
+  // All #1 stickers for countries (3 letters followed by '1')
+  return /^[A-Z]{3}1$/.test(code);
+});
+
 export const calculateStats = (collection) => {
   const total = TOTAL_STICKERS;
-  const coladas = Object.values(collection).filter(s => s.status === 'collected').length;
+  const collected = Object.entries(collection).filter(([_, s]) => s.status === 'collected');
+  const coladas = collected.length;
   const repetidas = Object.values(collection).reduce((acc, s) => acc + (s.repeated || 0), 0);
   const faltando = total - coladas;
   const porcentagem = total > 0 ? ((coladas / total) * 100).toFixed(1) : 0;
 
-  return { total, coladas, repetidas, faltando, porcentagem };
+  // Brilhantes
+  const totalBrilhantes = SHINY_CODES.length;
+  const coladasBrilhantes = collected.filter(([code]) => SHINY_CODES.includes(code)).length;
+  const porcentagemBrilhantes = totalBrilhantes > 0 ? ((coladasBrilhantes / totalBrilhantes) * 100).toFixed(1) : 0;
+
+  return { 
+    total, 
+    coladas, 
+    repetidas, 
+    faltando, 
+    porcentagem,
+    totalBrilhantes,
+    coladasBrilhantes,
+    porcentagemBrilhantes
+  };
 };

@@ -1,10 +1,14 @@
-import React from 'react';
-import { CATEGORIES } from '../lib/stickers';
+import { CATEGORIES, calculateStats } from '../lib/stickers';
 import { translations } from '../lib/translations';
 import { Trophy, Users, BarChart3, LayoutGrid, Star, Sparkles } from 'lucide-react';
 
 function Stats({ collection, lang = 'pt' }) {
   const t = translations[lang];
+  const stats = calculateStats(collection);
+
+  // Calculate stats per category (Individual Sections)
+// ... (omitted same as before)
+// ... (I'll just replace the start of the function)
 
   // Calculate stats per category (Individual Sections)
   const categoryStats = CATEGORIES.map(cat => {
@@ -45,6 +49,47 @@ function Stats({ collection, lang = 'pt' }) {
 
   return (
     <div className="space-y-6 animate-fade-in pb-10">
+      {/* Shiny Collection Progress */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
+          <Sparkles className="text-text-color" size={18} />
+          {t.shinyRank}
+        </h2>
+        <div className="glass-card p-4 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity">
+            <Sparkles size={64} className="text-text-color" />
+          </div>
+          
+          <div className="relative z-10 space-y-4">
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-xs font-black text-text-color uppercase tracking-widest mb-1">Status da Elite</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-black text-text-color">{stats.coladasBrilhantes}</span>
+                  <span className="text-xl font-bold text-text-dim opacity-50">/ {stats.totalBrilhantes}</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-3xl font-black text-text-color">{stats.porcentagemBrilhantes}%</span>
+              </div>
+            </div>
+
+            <div className="h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
+              <div 
+                className="h-full bg-gradient-to-r from-secondary to-primary transition-all duration-1000 ease-out relative"
+                style={{ width: `${stats.porcentagemBrilhantes}%` }}
+              >
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[progress-stripe_1s_linear_infinite]" />
+              </div>
+            </div>
+            
+            <p className="text-[9px] font-bold text-text-dim uppercase text-center tracking-tighter opacity-70">
+              {lang === 'pt' ? 'Inclui todos os FWC e os nº 1 de cada país' : lang === 'en' ? 'Includes all FWC and #1 from each country' : 'Incluye todos los FWC y los nº 1 de cada país'}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Groups Ranking */}
       <section className="space-y-3">
         <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
@@ -53,7 +98,10 @@ function Stats({ collection, lang = 'pt' }) {
         </h2>
         <div className="space-y-2">
           {topGroups.map(group => (
-            <div key={group.name} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-primary transition-all">
+            <div key={group.name} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-primary transition-all relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
+                <Users size={48} className="text-primary" />
+              </div>
               <div className="flex items-center gap-3">
                 {/* Group Flags (Perfect 2x2 Grid) */}
                 <div className="grid grid-cols-2 grid-rows-2 w-10 h-8 rounded-lg overflow-hidden border border-surface-border bg-black/20 shrink-0">
@@ -74,7 +122,7 @@ function Stats({ collection, lang = 'pt' }) {
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-black text-text-color text-[13px] uppercase tracking-tight leading-tight truncate">{group.name}</h3>
+                    <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">{group.name}</h3>
                     <span className="text-[12px] font-black text-primary shrink-0">{group.percent.toFixed(0)}%</span>
                   </div>
                   <div className="w-44 h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
@@ -85,8 +133,8 @@ function Stats({ collection, lang = 'pt' }) {
               <div className="text-right ml-4">
                 {group.percent === 100 ? <CheckCircle size={18} className="text-green-500" /> : (
                   <div className="flex items-center gap-1 font-black">
-                    <span className="text-[15px] text-text-color">{group.collected}</span>
-                    <span className="text-[11px] text-text-dim opacity-50">/ {group.total}</span>
+                    <span className="text-lg text-text-color">{group.collected}</span>
+                    <span className="text-sm text-text-dim opacity-50">/ {group.total}</span>
                   </div>
                 )}
               </div>
@@ -103,7 +151,10 @@ function Stats({ collection, lang = 'pt' }) {
         </h2>
         <div className="grid grid-cols-1 gap-2">
           {topTeams.map(team => (
-            <div key={team.id} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-secondary transition-all">
+            <div key={team.id} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-secondary transition-all relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
+                <Trophy size={48} className="text-secondary" />
+              </div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-8 rounded-lg bg-surface-color overflow-hidden flex items-center justify-center border border-surface-border shadow-inner shrink-0">
                    {team.flag && (
@@ -112,7 +163,7 @@ function Stats({ collection, lang = 'pt' }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-black text-text-color text-[13px] leading-tight truncate">{team.name}</h3>
+                    <h3 className="font-black text-text-color text-sm leading-tight truncate">{team.name}</h3>
                     <span className="text-[12px] font-black text-secondary shrink-0">{team.percent.toFixed(0)}%</span>
                   </div>
                   <div className="w-44 h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
@@ -123,8 +174,8 @@ function Stats({ collection, lang = 'pt' }) {
               <div className="text-right ml-4">
                 {team.percent === 100 ? <CheckCircle size={18} className="text-green-500" /> : (
                   <div className="flex items-center gap-1 font-black">
-                    <span className="text-[15px] text-text-color">{team.collected}</span>
-                    <span className="text-[11px] text-text-dim opacity-50">/ {team.total}</span>
+                    <span className="text-lg text-text-color">{team.collected}</span>
+                    <span className="text-sm text-text-dim opacity-50">/ {team.total}</span>
                   </div>
                 )}
               </div>
@@ -141,7 +192,10 @@ function Stats({ collection, lang = 'pt' }) {
         </h2>
         <div className="grid grid-cols-1 gap-2">
           {specials.map(special => (
-            <div key={special.id} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-accent transition-all">
+            <div key={special.id} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-accent transition-all relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
+                <Star size={48} className="text-accent" />
+              </div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-8 rounded-lg bg-accent/10 flex items-center justify-center border border-accent/20 shadow-inner overflow-hidden shrink-0">
                    {special.flag === 'fifa' ? (
@@ -154,7 +208,7 @@ function Stats({ collection, lang = 'pt' }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-black text-text-color text-[13px] uppercase tracking-tight leading-tight truncate">{special.name}</h3>
+                    <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">{special.name}</h3>
                     <span className="text-[12px] font-black text-accent shrink-0">{special.percent.toFixed(0)}%</span>
                   </div>
                   <div className="w-44 h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
@@ -165,8 +219,8 @@ function Stats({ collection, lang = 'pt' }) {
               <div className="text-right ml-4">
                 {special.percent === 100 ? <CheckCircle size={18} className="text-green-500" /> : (
                   <div className="flex items-center gap-1 font-black">
-                    <span className="text-[15px] text-text-color">{special.collected}</span>
-                    <span className="text-[11px] text-text-dim opacity-50">/ {special.total}</span>
+                    <span className="text-lg text-text-color">{special.collected}</span>
+                    <span className="text-sm text-text-dim opacity-50">/ {special.total}</span>
                   </div>
                 )}
               </div>
