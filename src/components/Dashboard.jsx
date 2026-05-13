@@ -4,19 +4,35 @@ import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, Aler
 import { translations } from '../lib/translations';
 import { motion, AnimatePresence } from 'framer-motion';
 
-function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, settings }) {
+function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, settings, onUpdateCollection }) {
   const stats = calculateStats(collection);
   const t = translations[lang];
   const [copied, setCopied] = useState(false);
   
-  // Comparison State
+  // States for Modals
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [isRepeatedOpen, setIsRepeatedOpen] = useState(false);
   const [pastedText, setPastedText] = useState('');
   const [analysis, setAnalysis] = useState(null);
 
-  const currencySymbol = settings?.country === 'BR' ? 'R$' : '$';
-  const totalInvested = (packets * (settings?.packetPrice || 0)).toFixed(2);
   const pricePerSticker = ((settings?.packetPrice || 0) / 7).toFixed(2);
+  const totalInvested = (packets * (settings?.packetPrice || 0)).toFixed(2);
+  const currencySymbol = settings?.country === 'BR' ? 'R$' : '$';
+
+  const handleDecrementRepeated = (code) => {
+    const current = collection[code] || { status: 'none', repeated: 0 };
+    if (current.repeated > 0) {
+      const newCollection = {
+        ...collection,
+        [code]: { ...current, repeated: current.repeated - 1 }
+      };
+      onUpdateCollection(newCollection);
+    }
+  };
+
+  const repeatedStickers = Object.entries(collection)
+    .filter(([_, data]) => data.repeated > 0)
+    .sort((a, b) => a[0].localeCompare(b[0]));
 
   const getProgressMessage = (percent) => {
     const p = parseFloat(percent);
@@ -123,24 +139,21 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
 
       {/* Grid of Tactical Metrics */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="glass-card p-4 flex flex-col items-center justify-center text-center tactical-piece">
-          <div className="bg-secondary/20 p-2 rounded-lg mb-2">
-            <Hash className="text-secondary" size={20} />
-          </div>
+        <div className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-black text-text-color">{stats.coladas}</span>
-            <span className="text-xs font-bold text-text-dim">/ {stats.total}</span>
+            <span className="text-4xl font-black text-text-color">{stats.coladas}</span>
+            <span className="text-sm font-bold text-text-dim">/ {stats.total}</span>
           </div>
-          <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter">{t.coladas}</span>
+          <span className="text-[10px] font-black text-text-dim uppercase tracking-widest mt-1">{t.coladas}</span>
         </div>
 
-        <div className="glass-card p-4 flex flex-col items-center justify-center text-center tactical-piece">
-          <div className="bg-accent/20 p-2 rounded-lg mb-2">
-            <Repeat className="text-accent" size={20} />
-          </div>
-          <span className="text-3xl font-black text-text-color">{stats.repetidas}</span>
-          <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter">{t.repetidas}</span>
-        </div>
+        <button 
+          onClick={() => setIsRepeatedOpen(true)}
+          className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece active:scale-95 transition-all group hover:border-accent"
+        >
+          <span className="text-4xl font-black text-text-color group-hover:text-accent transition-colors">{stats.repetidas}</span>
+          <span className="text-[10px] font-black text-text-dim uppercase tracking-widest mt-1 group-hover:text-accent transition-colors">{t.repetidas}</span>
+        </button>
       </div>
 
       {/* Split Logistics & Investment Cards */}
@@ -306,6 +319,67 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                   )}
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      {/* Repeated Stickers Modal */}
+      <AnimatePresence>
+        {isRepeatedOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-lg p-6 space-y-6 max-h-[80vh] flex flex-col"
+              style={{ backgroundColor: 'var(--board-bg)' }}
+            >
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-text-color uppercase tracking-tight">
+                  <Repeat size={20} className="text-accent" />
+                  {t.repetidas}
+                </h2>
+                <button onClick={() => setIsRepeatedOpen(false)} className="p-1 hover:bg-white/10 rounded-full text-text-color">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
+                {repeatedStickers.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
+                    <Repeat size={48} className="text-text-dim opacity-20" />
+                    <p className="text-text-dim font-bold">{lang === 'pt' ? 'Nenhuma figurinha repetida' : lang === 'en' ? 'No duplicate stickers' : 'Sin figuritas repetidas'}</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {repeatedStickers.map(([code, data]) => (
+                      <button 
+                        key={code}
+                        onClick={() => handleDecrementRepeated(code)}
+                        className="relative bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center gap-1 hover:bg-accent/20 hover:border-accent transition-all group active:scale-90"
+                      >
+                        <span className="text-xs font-black text-text-color">{code}</span>
+                        <div className="bg-accent text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                          x{data.repeated}
+                        </div>
+                        <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-accent rounded-full p-0.5">
+                          <Minus size={8} className="text-white" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <button 
+                onClick={() => setIsRepeatedOpen(false)}
+                className="w-full bg-white/5 py-4 rounded-xl font-black text-text-color hover:bg-white/10 transition-all uppercase tracking-widest text-xs"
+              >
+                {t.close}
+              </button>
             </motion.div>
           </motion.div>
         )}

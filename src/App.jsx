@@ -272,6 +272,7 @@ function App() {
                 packets={packets} 
                 onUpdatePackets={updatePackets}
                 settings={settings}
+                onUpdateCollection={updateCollection}
               />
             )}
             {activeTab === 'collection' && (
