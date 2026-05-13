@@ -98,44 +98,6 @@ function Stats({ collection, lang = 'pt', settings }) {
         </div>
       </section>
 
-      {/* Completion Estimate Card */}
-      <section className="space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="glass-card p-4 border-l-4 border-l-secondary relative overflow-hidden group shadow-lg">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Calculator size={48} className="text-secondary" />
-            </div>
-            <p className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1">{t.estimateTitle}</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-text-color">{estimate.remaining}</span>
-              <span className="text-[10px] font-bold text-text-dim uppercase">{t.packsToBuy}</span>
-            </div>
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <p className="text-[10px] font-black text-text-dim uppercase tracking-widest opacity-80">
-                {t.finalTotal}: <span className="text-text-color ml-1">{estimate.total} {t.packets}</span>
-              </p>
-            </div>
-          </div>
-          
-          <div className="glass-card p-4 border-l-4 border-l-primary relative overflow-hidden group shadow-lg">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Wallet size={48} className="text-primary" />
-            </div>
-            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{t.estimatedCost}</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-text-color">{currencySymbol} {remainingCost.toFixed(2)}</span>
-            </div>
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <p className="text-[10px] font-black text-text-dim uppercase tracking-widest opacity-80">
-                {t.finalTotal}: <span className="text-text-color ml-1">{currencySymbol} {totalCost.toFixed(2)}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-        <p className="text-[8px] font-bold text-text-dim uppercase text-center tracking-widest mt-2 opacity-50">
-          {t.estimateHint}
-        </p>
-      </section>
 
       {/* Groups Ranking */}
       <section className="space-y-3">

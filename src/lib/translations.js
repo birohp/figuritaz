@@ -1,7 +1,7 @@
 export const translations = {
   pt: {
     dashboard: "Dashboard",
-    album: "Meu Álbum",
+    album: "Álbum",
     vision: "VISÃO TÁTICA",
     progress: "PROGRESSO DA CAMPANHA",
     coladas: "Coladas",
@@ -25,7 +25,7 @@ export const translations = {
     filterMissing: "Faltam",
     filterRepeated: "Repetidas",
     filterShiny: "Brilhantes",
-    achievements: "Suas Conquistas",
+    achievements: "Conquistas",
     estimateTitle: "Previsão de Conclusão",
     remainingPacks: "Pacotes Restantes",
     estimatedCost: "Custo Estimado",
@@ -57,7 +57,7 @@ export const translations = {
   },
   en: {
     dashboard: "Dashboard",
-    album: "My Album",
+    album: "Album",
     vision: "TACTICAL VISION",
     progress: "CAMPAIGN PROGRESS",
     coladas: "Stuck",
@@ -81,7 +81,7 @@ export const translations = {
     filterMissing: "Missing",
     filterRepeated: "Repeated",
     filterShiny: "Shiny",
-    achievements: "Your Achievements",
+    achievements: "Achievements",
     estimateTitle: "Completion Estimate",
     remainingPacks: "Remaining Packs",
     estimatedCost: "Estimated Cost",
@@ -113,7 +113,7 @@ export const translations = {
   },
   es: {
     dashboard: "Dashboard",
-    album: "Mi Álbum",
+    album: "Álbum",
     vision: "VISIÓN TÁCTICA",
     progress: "PROGRESO DE LA CAMPAÑA",
     coladas: "Pegadas",
@@ -137,7 +137,7 @@ export const translations = {
     filterMissing: "Faltan",
     filterRepeated: "Repetidas",
     filterShiny: "Brilhantes",
-    achievements: "Tus Logros",
+    achievements: "Logros",
     estimateTitle: "Previsión de Conclusión",
     remainingPacks: "Sobres Restantes",
     estimatedCost: "Costo Estimado",

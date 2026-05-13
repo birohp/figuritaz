@@ -303,7 +303,7 @@ function App() {
 
       {/* Navigation Bar */}
       <div className="fixed bottom-8 left-0 right-0 flex justify-center z-40 px-4">
-        <nav className="glass-card p-2 rounded-full flex gap-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-2xl">
+        <nav className="glass-card p-1.5 rounded-full flex gap-0.5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-2xl">
           <NavButton 
             active={activeTab === 'dashboard'} 
             onClick={() => setActiveTab('dashboard')}
@@ -471,7 +471,7 @@ function NavButton({ active, onClick, icon, label }) {
   return (
     <button 
       onClick={onClick}
-      className={`relative flex items-center gap-2 px-8 py-3 rounded-full transition-all duration-500 overflow-hidden group ${
+      className={`relative flex items-center gap-1.5 px-4 sm:px-6 py-3 rounded-full transition-all duration-500 overflow-hidden group ${
         active 
           ? 'text-white' 
           : 'text-text-dim hover:text-text-color'

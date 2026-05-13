@@ -91,45 +91,132 @@ export const ACHIEVEMENTS = [
   { id: 'first_10', name: 'Primeiros Passos', description: 'Cole 10 figurinhas', icon: 'Footprints' },
   { id: 'first_50', name: 'Colecionador Casual', description: 'Cole 50 figurinhas', icon: 'User' },
   { id: 'century', name: 'O Centenário', description: 'Cole 100 figurinhas', icon: 'Award' },
+  { id: 'elite_300', name: 'Veterano', description: 'Cole 300 figurinhas', icon: 'Star' },
+  { id: 'half_way', name: 'Meio de Campo', description: 'Complete 50% do álbum', icon: 'Target' },
   { id: 'shiny_5', name: 'Brilho Inicial', description: 'Cole 5 figurinhas brilhantes', icon: 'Sparkles' },
   { id: 'shiny_15', name: 'Mestre do Brilho', description: 'Cole 15 figurinhas brilhantes', icon: 'Zap' },
   { id: 'team_complete', name: 'Técnico', description: 'Complete 1 seleção inteira', icon: 'Shield' },
   { id: 'group_complete', name: 'Campeão de Grupo', description: 'Complete 1 grupo inteiro', icon: 'Trophy' },
-  { id: 'repeated_10', name: 'Negociador', description: 'Tenha 10 figurinhas repetidas', icon: 'RefreshCcw' }
+  { id: 'fifa_complete', name: 'Historiador', description: 'Complete a seção FIFA', icon: 'History' },
+  { id: 'coca_complete', name: 'Refrescante', description: 'Complete a seção Coca-Cola', icon: 'Flame' },
+  { id: 'repeated_10', name: 'Negociador', description: 'Tenha 10 figurinhas repetidas', icon: 'RefreshCcw' },
+  { id: 'trading_pro', name: 'Magnata das Trocas', description: 'Tenha 50 figurinhas repetidas', icon: 'TrendingUp' },
+  { id: 'elite_500', name: 'Colecionador de Elite', description: 'Cole 500 figurinhas', icon: 'Shield' },
+  { id: 'master_teams', name: 'Mestre das Seleções', description: 'Complete 10 seleções', icon: 'Trophy' },
+  { id: 'globetrotter', name: 'Globetrotter', description: 'Uma de cada categoria', icon: 'Globe' },
+  { id: 'master_13', name: 'Mestre das Equipes', description: 'Cole todas as fotos de equipe (nº 13)', icon: 'UsersIcon' },
+  { id: 'full_album', name: 'Lenda Viva', description: 'Complete 100% do álbum', icon: 'Trophy' }
 ];
 
 export const getAchievements = (collection) => {
   const stats = calculateStats(collection);
-  const collectedCodes = Object.keys(collection).filter(code => collection[code].status === 'collected');
   
   const unlocked = new Set();
 
   if (stats.coladas >= 10) unlocked.add('first_10');
   if (stats.coladas >= 50) unlocked.add('first_50');
   if (stats.coladas >= 100) unlocked.add('century');
+  if (stats.coladas >= 300) unlocked.add('elite_300');
+  if (stats.coladas >= 500) unlocked.add('elite_500');
+  if (stats.coladas / stats.total >= 0.5) unlocked.add('half_way');
   if (stats.coladasBrilhantes >= 5) unlocked.add('shiny_5');
   if (stats.coladasBrilhantes >= 15) unlocked.add('shiny_15');
   if (stats.repetidas >= 10) unlocked.add('repeated_10');
+  if (stats.repetidas >= 50) unlocked.add('trading_pro');
 
   // Check if any team is complete
+  let completeTeams = 0;
+  let hasFromAll = true;
   for (const cat of CATEGORIES) {
-    if (cat.stickers.every(code => collection[code]?.status === 'collected')) {
+    const collectedInCat = cat.stickers.filter(code => collection[code]?.status === 'collected');
+    if (collectedInCat.length === 0) hasFromAll = false;
+    
+    if (collectedInCat.length === cat.stickers.length) {
+      completeTeams++;
       unlocked.add('team_complete');
-      break;
+      if (cat.id === 'fifa_world_cup') unlocked.add('fifa_complete');
+      if (cat.id === 'coca-cola') unlocked.add('coca_complete');
     }
   }
+  
+  if (completeTeams >= 10) unlocked.add('master_teams');
+  if (hasFromAll) unlocked.add('globetrotter');
+  if (stats.coladas === stats.total) unlocked.add('full_album');
 
-  // Check if any group is complete
+  // Check Master 13
+  const codes13 = ALL_VALID_CODES.filter(code => code.endsWith('13'));
+  const collected13 = codes13.filter(code => collection[code]?.status === 'collected');
+  if (collected13.length === codes13.length) unlocked.add('master_13');
+
+  // Check groups
   const groups = [...new Set(CATEGORIES.map(c => c.group))];
   for (const group of groups) {
-    const groupStickers = CATEGORIES.filter(c => c.group === group).flatMap(c => c.stickers);
-    if (groupStickers.every(code => collection[code]?.status === 'collected')) {
-      unlocked.add('group_complete');
-      break;
-    }
+    const groupCategories = CATEGORIES.filter(c => c.group === group);
+    const isGroupComplete = groupCategories.every(cat => 
+      cat.stickers.every(code => collection[code]?.status === 'collected')
+    );
+    if (isGroupComplete && group.startsWith('Grupo')) unlocked.add('group_complete');
   }
 
   return unlocked;
+};
+
+export const getAchievementProgress = (collection) => {
+  const stats = calculateStats(collection);
+  const progress = {};
+
+  progress['first_10'] = { current: stats.coladas, target: 10 };
+  progress['first_50'] = { current: stats.coladas, target: 50 };
+  progress['century'] = { current: stats.coladas, target: 100 };
+  progress['elite_300'] = { current: stats.coladas, target: 300 };
+  progress['elite_500'] = { current: stats.coladas, target: 500 };
+  progress['half_way'] = { current: Math.min(100, Math.floor((stats.coladas / stats.total) * 100)), target: 50, isPercent: true };
+  progress['shiny_5'] = { current: stats.coladasBrilhantes, target: 5 };
+  progress['shiny_15'] = { current: stats.coladasBrilhantes, target: 15 };
+  progress['repeated_10'] = { current: stats.repetidas, target: 10 };
+  progress['trading_pro'] = { current: stats.repetidas, target: 50 };
+  progress['full_album'] = { current: stats.coladas, target: stats.total };
+
+  let completeTeams = 0;
+  let categoriesWithStickers = 0;
+  for (const cat of CATEGORIES) {
+    const collectedInCat = cat.stickers.filter(code => collection[code]?.status === 'collected');
+    if (collectedInCat.length > 0) categoriesWithStickers++;
+    if (collectedInCat.length === cat.stickers.length) completeTeams++;
+  }
+
+  progress['team_complete'] = { current: completeTeams, target: 1 };
+  progress['master_teams'] = { current: completeTeams, target: 10 };
+  progress['globetrotter'] = { current: categoriesWithStickers, target: CATEGORIES.length };
+  
+  const codes13 = ALL_VALID_CODES.filter(code => code.endsWith('13'));
+  const collected13 = codes13.filter(code => collection[code]?.status === 'collected');
+  progress['master_13'] = { current: collected13.length, target: codes13.length };
+
+  // Special sections
+  const fifaCat = CATEGORIES.find(c => c.id === 'fifa_world_cup');
+  const fifaCollected = fifaCat.stickers.filter(code => collection[code]?.status === 'collected');
+  progress['fifa_complete'] = { current: fifaCollected.length, target: fifaCat.stickers.length };
+
+  const cocaCat = CATEGORIES.find(c => c.id === 'coca-cola');
+  const cocaCollected = cocaCat.stickers.filter(code => collection[code]?.status === 'collected');
+  progress['coca_complete'] = { current: cocaCollected.length, target: cocaCat.stickers.length };
+
+  // Groups
+  const groups = [...new Set(CATEGORIES.map(c => c.group).filter(g => g.startsWith('Grupo')))];
+  let maxGroupProgress = 0;
+  for (const group of groups) {
+    const groupCats = CATEGORIES.filter(c => c.group === group);
+    const totalInGroup = groupCats.reduce((acc, c) => acc + c.stickers.length, 0);
+    const collectedInGroup = groupCats.reduce((acc, c) => 
+      acc + c.stickers.filter(code => collection[code]?.status === 'collected').length, 0
+    );
+    if (collectedInGroup === totalInGroup) maxGroupProgress = totalInGroup;
+    else if (collectedInGroup > maxGroupProgress) maxGroupProgress = collectedInGroup;
+  }
+  progress['group_complete'] = { current: completeTeams > 0 ? 1 : 0, target: 1 }; // Simplified or could be more complex
+
+  return progress;
 };
 
 export const calculateCompletionEstimate = (coladas, total, stickersPerPack = 7) => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { calculateStats, ALL_VALID_CODES, SHINY_CODES } from '../lib/stickers';
-import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon } from 'lucide-react';
+import { calculateStats, ALL_VALID_CODES, SHINY_CODES, calculateCompletionEstimate } from '../lib/stickers';
+import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -9,6 +9,10 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
   const t = translations[lang];
   const [copied, setCopied] = useState(false);
   
+  const estimate = calculateCompletionEstimate(stats.coladas, stats.total);
+  const remainingCost = estimate.remaining * (settings?.packetPrice || 4.00);
+  const totalCost = estimate.total * (settings?.packetPrice || 4.00);
+
   // States for Modals
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isRepeatedOpen, setIsRepeatedOpen] = useState(false);
@@ -158,49 +162,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
         </button>
       </div>
 
-      {/* Split Logistics & Investment Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Packets Card */}
-        <div className="glass-card p-4 flex flex-col border-t-4 border-t-secondary/50 tactical-piece">
-          <div className="flex items-center gap-2 mb-3">
-            <ShoppingBag className="text-secondary" size={18} />
-            <h3 className="font-black text-[10px] text-text-color uppercase tracking-tight">{t.packets}</h3>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3 bg-black/10 p-1 rounded-xl w-full justify-between">
-              <button 
-                onClick={() => onUpdatePackets(Math.max(0, packets - 1))}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/20 transition-colors text-text-dim"
-              >
-                <Minus size={14} />
-              </button>
-              <span className="text-xl font-black text-text-color">{packets}</span>
-              <button 
-                onClick={() => onUpdatePackets(packets + 1)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-secondary/20 hover:bg-secondary/30 transition-colors text-secondary"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
-            <p className="text-[9px] text-text-dim font-bold uppercase">{t.totalStickers}: {packets * 7}</p>
-          </div>
-        </div>
-
-        {/* Investment Card */}
-        <div className="glass-card p-4 flex flex-col border-t-4 border-t-primary/50 tactical-piece justify-between">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="text-primary" size={18} />
-            <h3 className="font-black text-[10px] text-text-color uppercase tracking-tight">{t.totalInvested}</h3>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-black text-text-color">{currencySymbol} {totalInvested}</p>
-            <p className="text-[9px] font-bold text-primary uppercase mt-1">
-              {currencySymbol} {pricePerSticker} / fig
-            </p>
-          </div>
-        </div>
-      </div>
-
+      {/* Actions Grid */}
       <div className="grid grid-cols-2 gap-4">
         {/* Comparison Button */}
         <button 
@@ -228,6 +190,82 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
           </span>
         </button>
       </div>
+
+      {/* Unified Logistics & Estimates */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Packets Card */}
+        <div className="glass-card p-4 border-l-4 border-l-secondary relative overflow-hidden group shadow-lg">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <ShoppingBag size={48} className="text-secondary" />
+          </div>
+          
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <p className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1">{t.packets}</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-text-color">{packets}</span>
+                <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter opacity-60">abertos</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-black/10 p-1 rounded-lg">
+              <button 
+                onClick={() => onUpdatePackets(Math.max(0, packets - 1))}
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/20 transition-colors text-text-dim"
+              >
+                <Minus size={12} />
+              </button>
+              <button 
+                onClick={() => onUpdatePackets(packets + 1)}
+                className="w-6 h-6 flex items-center justify-center rounded bg-secondary/20 hover:bg-secondary/30 transition-colors text-secondary"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 pt-3 border-t border-white/5">
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">A comprar (est.)</span>
+              <span className="text-[11px] font-black text-secondary">+{estimate.remaining} pacotinhos</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">Projeção Final</span>
+              <span className="text-[11px] font-black text-text-color">{packets + estimate.remaining} pacotes</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Investment Card */}
+        <div className="glass-card p-4 border-l-4 border-l-primary relative overflow-hidden group shadow-lg">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <TrendingUp size={48} className="text-primary" />
+          </div>
+          
+          <div className="mb-3">
+            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{t.totalInvested}</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-text-color">{currencySymbol} {totalInvested}</span>
+              <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter opacity-60">gastos</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 pt-3 border-t border-white/5">
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">A investir (est.)</span>
+              <span className="text-[11px] font-black text-primary">+{currencySymbol} {remainingCost.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">Custo Total Final</span>
+              <span className="text-[11px] font-black text-text-color">{currencySymbol} {(packets * (settings?.packetPrice || 4.00) + remainingCost).toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-xs font-black text-text-dim uppercase text-center tracking-widest opacity-60">
+        {t.estimateHint}
+      </p>
 
       {/* Comparison Modal */}
       <AnimatePresence>

@@ -1,15 +1,15 @@
-import React from 'react';
-import { Award, Footprints, User, Sparkles, Zap, Shield, Trophy, RefreshCcw } from 'lucide-react';
-import { ACHIEVEMENTS, getAchievements } from '../lib/stickers';
+import { Award, Footprints, User, Sparkles, Zap, Shield, Trophy, RefreshCcw, History, Flame, Target, Star, TrendingUp, Globe, Users } from 'lucide-react';
+import { ACHIEVEMENTS, getAchievements, getAchievementProgress } from '../lib/stickers';
 import { translations } from '../lib/translations';
 
 const IconMap = {
-  Footprints, User, Award, Sparkles, Zap, Shield, Trophy, RefreshCcw
+  Footprints, User, Award, Sparkles, Zap, Shield, Trophy, RefreshCcw, History, Flame, Target, Star, TrendingUp, Globe, UsersIcon: Users
 };
 
 function Achievements({ collection, lang = 'pt' }) {
   const t = translations[lang];
   const unlockedAchievements = getAchievements(collection);
+  const progressMap = getAchievementProgress(collection);
 
   return (
     <div className="space-y-8 animate-fade-in pb-20">
@@ -24,6 +24,8 @@ function Achievements({ collection, lang = 'pt' }) {
         {ACHIEVEMENTS.map(ach => {
           const isUnlocked = unlockedAchievements.has(ach.id);
           const Icon = IconMap[ach.icon] || Award;
+          const prog = progressMap[ach.id] || { current: 0, target: 1 };
+          const percent = Math.min(100, Math.floor((prog.current / prog.target) * 100));
           
           return (
             <div 
@@ -31,7 +33,7 @@ function Achievements({ collection, lang = 'pt' }) {
               className={`glass-card p-6 flex flex-col items-center text-center gap-4 transition-all duration-500 border-2 ${
                 isUnlocked 
                   ? 'border-yellow-400/30 bg-yellow-400/5' 
-                  : 'opacity-40 grayscale blur-[0.5px] border-white/5 bg-white/2'
+                  : 'opacity-60 border-white/5 bg-white/2'
               }`}
             >
               <div className={`w-20 h-20 rounded-full flex items-center justify-center border-4 shadow-2xl relative ${
@@ -50,13 +52,28 @@ function Achievements({ collection, lang = 'pt' }) {
                 )}
               </div>
               
-              <div className="space-y-1">
+              <div className="space-y-1 w-full">
                 <h3 className={`font-black uppercase tracking-tight ${isUnlocked ? 'text-text-color' : 'text-text-dim'}`}>
                   {ach.name}
                 </h3>
                 <p className="text-[10px] font-bold text-text-dim leading-tight">
                   {ach.description}
                 </p>
+                
+                {!isUnlocked && (
+                  <div className="mt-3 space-y-1.5">
+                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-text-dim opacity-70">
+                      <span>Progresso</span>
+                      <span>{prog.isPercent ? `${prog.current}%` : prog.current} / {prog.isPercent ? `${prog.target}%` : prog.target}</span>
+                    </div>
+                    <div className="h-1.5 bg-black/20 rounded-full overflow-hidden border border-white/5">
+                      <div 
+                        className="h-full bg-gradient-to-r from-secondary to-primary transition-all duration-1000"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {isUnlocked && (
