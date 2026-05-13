@@ -16,8 +16,9 @@ function Stats({ collection, lang = 'pt', settings }) {
     Footprints, User, Award, Sparkles, Zap, Shield, Trophy, RefreshCcw
   };
 
-  const estimatedPacks = calculateCompletionEstimate(stats.coladas, stats.total);
-  const estimatedCost = estimatedPacks * (settings?.packetPrice || 4.00);
+  const estimate = calculateCompletionEstimate(stats.coladas, stats.total);
+  const remainingCost = estimate.remaining * (settings?.packetPrice || 4.00);
+  const totalCost = estimate.total * (settings?.packetPrice || 4.00);
   const currencySymbol = settings?.country === 'BR' ? 'R$' : '$';
 
   // Calculate stats per category (Individual Sections)
@@ -142,8 +143,13 @@ function Stats({ collection, lang = 'pt', settings }) {
             </div>
             <p className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1">{t.estimateTitle}</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-text-color">{estimatedPacks}</span>
+              <span className="text-3xl font-black text-text-color">{estimate.remaining}</span>
               <span className="text-[10px] font-bold text-text-dim uppercase">{t.packsToBuy}</span>
+            </div>
+            <div className="mt-2 pt-2 border-t border-white/5">
+              <p className="text-[8px] font-bold text-text-dim uppercase tracking-tighter opacity-60">
+                {t.finalTotal}: <span className="text-text-color">{estimate.total} {t.packets}</span>
+              </p>
             </div>
           </div>
           
@@ -153,7 +159,12 @@ function Stats({ collection, lang = 'pt', settings }) {
             </div>
             <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{t.estimatedCost}</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-text-color">{currencySymbol} {estimatedCost.toFixed(2)}</span>
+              <span className="text-3xl font-black text-text-color">{currencySymbol} {remainingCost.toFixed(2)}</span>
+            </div>
+            <div className="mt-2 pt-2 border-t border-white/5">
+              <p className="text-[8px] font-bold text-text-dim uppercase tracking-tighter opacity-60">
+                {t.finalTotal}: <span className="text-text-color">{currencySymbol} {totalCost.toFixed(2)}</span>
+              </p>
             </div>
           </div>
         </div>

@@ -133,23 +133,27 @@ export const getAchievements = (collection) => {
 };
 
 export const calculateCompletionEstimate = (coladas, total, stickersPerPack = 7) => {
-  const targetPercent = 0.60; // Dica de colecionador: comprar até 60% e trocar o resto
+  const targetPercent = 0.60;
   const targetStickers = Math.floor(total * targetPercent);
   
-  if (coladas >= targetStickers) return 0;
+  // 1. Total needed from 0 to 60%
+  let harmonicSumTotal = 0;
+  for (let i = (total - targetStickers) + 1; i <= total; i++) {
+    harmonicSumTotal += 1 / i;
+  }
+  const totalPacks = Math.ceil((total * harmonicSumTotal) / stickersPerPack);
+
+  // 2. Remaining needed from current to 60%
+  if (coladas >= targetStickers) return { remaining: 0, total: totalPacks };
   
-  // Harmonic sum from (T - target) to (T - coladas)
-  // This represents the expected stickers to get to the target
+  let harmonicSumRemaining = 0;
   const start = total - targetStickers;
   const end = total - coladas;
-  
-  let harmonicSum = 0;
   for (let i = start + 1; i <= end; i++) {
-    harmonicSum += 1 / i;
+    harmonicSumRemaining += 1 / i;
   }
   
-  const expectedStickers = total * harmonicSum;
-  const expectedPacks = expectedStickers / stickersPerPack;
+  const remainingPacks = Math.ceil((total * harmonicSumRemaining) / stickersPerPack);
   
-  return Math.ceil(expectedPacks);
+  return { remaining: remainingPacks, total: totalPacks };
 };
