@@ -1,12 +1,14 @@
-# ⚽ FIGURITAS - Álbum 2026
+# ⚽ FiguritaZ - Álbum 2026
 
 ![Versão](https://img.shields.io/badge/vers%C3%A3o-1.3.0-blue)
 ![Firebase](https://img.shields.io/badge/backend-Firebase-orange)
 ![PWA](https://img.shields.io/badge/plataforma-PWA-green)
 
-**FIGURITAS** é um gerenciador tático de alto desempenho para colecionadores de figurinhas. Desenvolvido com uma estética "Tactical Board", o app oferece uma visão analítica e sincronizada de toda a sua coleção.
+**FiguritaZ** é um gerenciador tático de alto desempenho para colecionadores de figurinhas. Desenvolvido com uma estética "Tactical Board", o app oferece uma visão analítica e sincronizada de toda a sua coleção.
 
-🔗 **Acesse agora:** [https://figuritas-33653.web.app](https://figuritas-33653.web.app)
+🔗 **Acesse agora:** [https://figuritas-33653.web.app](https://figuritas-33653.web.app) (Site ID mantido como figuritas-33653)
+
+📂 **Repositório:** [https://github.com/birohp/figuritaz](https://github.com/birohp/figuritaz)
 
 ## 🏆 Funcionalidades Principais
 
@@ -28,7 +30,7 @@
 
 1. **Clone o repositório:**
    ```bash
-   git clone git@github.com:birohp/figuritas.git
+   git clone https://github.com/birohp/figuritaz.git
    ```
 
 2. **Instale as dependências:**

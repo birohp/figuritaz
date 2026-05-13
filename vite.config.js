@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'FIGURITAS - Álbum 2026',
-        short_name: 'FIGURITAS',
+        name: 'FiguritaZ - Álbum 2026',
+        short_name: 'FiguritaZ',
         description: 'Gerenciador de figurinhas com scanner inteligente',
         theme_color: '#05060a',
         background_color: '#05060a',

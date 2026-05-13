@@ -36,7 +36,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
       if (p >= 50) return "¡Medio campo dominado! Sigue avanzando.";
       if (p >= 25) return "Primer tiempo concluido. ¡Vamos por la remontada!";
       if (p > 0) return "¡El juego ha comenzado! Organiza tu colección.";
-      return "¡Equipo alineado! Comienza a pegar tus figuritas.";
+      return "¡Equipo alineado! Comienza a pegar tus figuritaZ.";
     }
     // Default PT
     if (p >= 100) return "Álbum completo! Você é um mestre tático!";
@@ -59,7 +59,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Figuritas',
+          title: 'FiguritaZ',
           text: shareText,
         });
       } catch (err) {

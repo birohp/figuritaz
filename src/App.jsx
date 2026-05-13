@@ -213,10 +213,10 @@ function App() {
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <img 
           src="/pwa-192x192.png" 
-          alt="FIGURITAS Logo" 
+          alt="FiguritaZ Logo" 
           className="w-32 h-32 mb-6 rounded-3xl shadow-2xl animate-bounce-slow border-2 border-surface-border"
         />
-        <h1 className="text-5xl mb-4 text-text-color" style={{ fontFamily: "'Permanent Marker', cursive" }}>FIGURITAS</h1>
+        <h1 className="text-5xl mb-4 text-text-color" style={{ fontFamily: "'Permanent Marker', cursive" }}>FiguritaZ</h1>
         <p className="text-text-dim mb-8 max-w-md text-sm">{t.welcome}</p>
         
         <button onClick={handleLogin} className="btn-primary text-lg px-8 py-4">
@@ -243,7 +243,7 @@ function App() {
             alt="Logo" 
             className="w-10 h-10 rounded-xl shadow-lg border border-surface-border"
           />
-          <h1 className="text-2xl text-text-color" style={{ fontFamily: "'Permanent Marker', cursive" }}>FIGURITAS</h1>
+          <h1 className="text-2xl text-text-color" style={{ fontFamily: "'Permanent Marker', cursive" }}>FiguritaZ</h1>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-text-dim hover:text-text-color transition-colors">
