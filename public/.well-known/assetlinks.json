@@ -5,9 +5,9 @@
     ],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.birohp.figuritas",
+      "package_name": "com.figuritaz.app",
       "sha256_cert_fingerprints": [
-        "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+        "58:1D:16:B6:07:58:03:30:DC:2D:D7:14:16:5A:3C:2F:75:39:51:89:5F:47:B7:1C:03:0C:67:17:C2:70:5D:7D"
       ]
     }
   }

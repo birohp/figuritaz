@@ -1,34 +1,111 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Política de Privacidade - FiguritaZ</title>
     <style>
-        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; }
-        h1 { color: #064e3b; }
-        h2 { color: #064e3b; margin-top: 30px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 40px 20px; background-color: #f9f9f9; }
+        .card { background: white; padding: 40px; border-radius: 20px; shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        h1 { color: #05060a; border-bottom: 2px solid #22c55e; padding-bottom: 10px; }
+        h2 { color: #1e3a8a; margin-top: 30px; }
+        p, li { font-size: 14px; color: #555; }
+        .lang-switch { display: flex; gap: 10px; margin-bottom: 20px; }
+        .lang-btn { background: #eee; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .lang-btn.active { background: #22c55e; color: white; }
+        section { display: none; }
+        section.active { display: block; }
     </style>
 </head>
 <body>
-    <h1>Política de Privacidade</h1>
-    <p>Última atualização: 12 de maio de 2026</p>
-    
-    <p>O aplicativo <strong>FiguritaZ</strong> foi desenvolvido para ajudar usuários a gerenciarem suas coleções de figurinhas.</p>
+    <div class="card">
+        <div class="lang-switch">
+            <button class="lang-btn active" onclick="switchLang('pt')">Português</button>
+            <button class="lang-btn" onclick="switchLang('es')">Español</button>
+        </div>
 
-    <h2>1. Coleta de Dados</h2>
-    <p>O aplicativo coleta apenas informações básicas de identificação fornecidas pelo Google Authentication (nome e e-mail) para fins de sincronização de dados entre dispositivos através do Firebase.</p>
+        <!-- PORTUGUÊS -->
+        <section id="pt" class="active">
+            <h1>Política de Privacidade</h1>
+            <p>Última atualização: 13 de maio de 2026</p>
+            
+            <p>O <strong>FiguritaZ</strong> está comprometido em proteger sua privacidade. Esta política descreve como coletamos e usamos seus dados.</p>
 
-    <h2>2. Uso de Dados</h2>
-    <p>Os dados da sua coleção de figurinhas são armazenados de forma privada no banco de dados Cloud Firestore e associados exclusivamente à sua conta. Não compartilhamos esses dados com terceiros.</p>
+            <h2>1. Informações que Coletamos</h2>
+            <p>Ao utilizar nosso aplicativo, podemos coletar as seguintes informações:</p>
+            <ul>
+                <li><strong>Identidade:</strong> Nome e endereço de e-mail através da autenticação do Google.</li>
+                <li><strong>Dados da Coleção:</strong> Informações sobre as figurinhas marcadas como coladas ou repetidas.</li>
+                <li><strong>Preferências:</strong> Configurações de país, moeda e cores do tabuleiro.</li>
+            </ul>
 
-    <h2>3. Segurança</h2>
-    <p>Utilizamos os protocolos de segurança do Google Firebase para garantir que suas informações estejam protegidas.</p>
+            <h2>2. Uso dos Dados</h2>
+            <p>Usamos seus dados exclusivamente para:</p>
+            <ul>
+                <li>Sincronizar sua coleção entre múltiplos dispositivos através do Firebase.</li>
+                <li>Personalizar a experiência tática com base no seu país.</li>
+                <li>Exibir anúncios relevantes através do Google AdMob.</li>
+            </ul>
 
-    <h2>4. Exclusão de Dados</h2>
-    <p>O usuário pode solicitar a exclusão de sua conta e todos os dados associados a qualquer momento entrando em contato através do e-mail do desenvolvedor.</p>
+            <h2>3. Terceiros</h2>
+            <p>Utilizamos serviços de terceiros que podem coletar dados:</p>
+            <ul>
+                <li><strong>Google Firebase:</strong> Para armazenamento de dados e autenticação.</li>
+                <li><strong>Google AdMob:</strong> Para exibição de anúncios.</li>
+            </ul>
 
-    <h2>5. Contato</h2>
-    <p>Para dúvidas, entre em contato através do e-mail: birohp@gmail.com</p>
+            <h2>4. Seus Direitos</h2>
+            <p>Você pode solicitar a exclusão de todos os seus dados a qualquer momento através das configurações do aplicativo ou entrando em contato conosco.</p>
+
+            <h2>5. Contato</h2>
+            <p>Dúvidas? Entre em contato pelo e-mail: tarcisio@exemplo.com</p>
+        </section>
+
+        <!-- ESPAÑOL -->
+        <section id="es">
+            <h1>Política de Privacidad</h1>
+            <p>Última actualización: 13 de mayo de 2026</p>
+            
+            <p><strong>FiguritaZ</strong> se compromete a proteger su privacidad. Esta política describe cómo recopilamos y utilizamos sus datos.</p>
+
+            <h2>1. Información que Recopilamos</h2>
+            <p>Al utilizar nuestra aplicación, podemos recopilar la siguiente información:</p>
+            <ul>
+                <li><strong>Identidad:</strong> Nombre y dirección de correo electrónico a través de la autenticación de Google.</li>
+                <li><strong>Datos de la Colección:</strong> Información sobre los stickers marcados como pegados o repetidos.</li>
+                <li><strong>Preferencias:</strong> Configuraciones de país, moneda y colores del tablero.</li>
+            </ul>
+
+            <h2>2. Uso de los Datos</h2>
+            <p>Usamos sus datos exclusivamente para:</p>
+            <ul>
+                <li>Sincronizar su colección entre múltiples dispositivos a través de Firebase.</li>
+                <li>Personalizar la experiencia táctica según su país.</li>
+                <li>Mostrar anuncios relevantes a través de Google AdMob.</li>
+            </ul>
+
+            <h2>3. Terceros</h2>
+            <p>Utilizamos servicios de terceros que pueden recopilar datos:</p>
+            <ul>
+                <li><strong>Google Firebase:</strong> Para almacenamiento de datos y autenticación.</li>
+                <li><strong>Google AdMob:</strong> Para visualización de anuncios.</li>
+            </ul>
+
+            <h2>4. Sus Derechos</h2>
+            <p>Puede solicitar la eliminación de todos sus datos en cualquier momento a través de la configuración de la aplicación.</p>
+
+            <h2>5. Contacto</h2>
+            <p>¿Dudas? Contáctenos por correo electrónico: tarcisio@exemplo.com</p>
+        </section>
+    </div>
+
+    <script>
+        function switchLang(lang) {
+            document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(lang).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
 </html>
