@@ -29,9 +29,9 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
     onUpdateCollection(newCollection);
   };
 
-  const repeatedStickers = Object.entries(collection)
-    .filter(([_, data]) => data.repeated > 0)
-    .sort((a, b) => a[0].localeCompare(b[0]));
+  const repeatedStickers = ALL_VALID_CODES
+    .filter(code => collection[code]?.repeated > 0)
+    .map(code => [code, collection[code]]);
 
   const getProgressMessage = (percent) => {
     const p = parseFloat(percent);
@@ -154,7 +154,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
             <span className="text-4xl font-black text-text-color">{stats.repetidas}</span>
           </div>
           <span className="text-[10px] font-black text-text-dim uppercase tracking-widest mt-1">{t.repetidas}</span>
-          <span className="text-[9px] font-black text-accent uppercase tracking-tighter mt-1 opacity-70">(Gerenciar)</span>
+          <span className="text-[9px] font-black text-text-dim uppercase tracking-tighter mt-1 opacity-70">(Clicar)</span>
         </button>
       </div>
 
