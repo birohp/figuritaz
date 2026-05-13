@@ -322,6 +322,8 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+
       {/* Repeated Stickers Modal */}
       <AnimatePresence>
         {isRepeatedOpen && (
