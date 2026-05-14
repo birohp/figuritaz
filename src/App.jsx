@@ -210,31 +210,6 @@ function App() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <img 
-          src="/pwa-192x192.png" 
-          alt="FiguritaZ Logo" 
-          className="w-32 h-32 mb-6 rounded-3xl shadow-2xl animate-bounce-slow border-2 border-surface-border"
-        />
-        <h1 className="text-5xl mb-4 text-text-color" style={{ fontFamily: "'Permanent Marker', cursive" }}>FiguritaZ</h1>
-        <p className="text-text-dim mb-8 max-w-md text-sm">{t.welcome}</p>
-        
-        <button onClick={handleLogin} className="btn-primary text-lg px-8 py-4">
-          <User size={20} />
-          {t.login}
-        </button>
-
-        {authError && (
-          <p className="mt-4 text-[10px] text-accent font-bold uppercase tracking-tighter opacity-80">
-            Erro: {authError}
-          </p>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col pb-24">
       {/* Header */}
@@ -248,17 +223,17 @@ function App() {
           <h1 className="text-2xl text-text-color" style={{ fontFamily: "'Permanent Marker', cursive" }}>FiguritaZ</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-text-dim hover:text-text-color transition-colors">
+          <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-text-dim hover:text-text-color transition-colors relative">
             <SettingsIcon size={20} />
-          </button>
-          <button onClick={handleLogout} className="p-2 text-text-dim hover:text-accent transition-colors">
-            <LogOut size={20} />
+            {!user && (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-accent rounded-full border-2 border-surface-bg shadow-lg animate-pulse" />
+            )}
           </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
+      <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -306,7 +281,7 @@ function App() {
 
       {/* Navigation Bar */}
       <div className="fixed bottom-8 left-0 right-0 flex justify-center z-40 px-4">
-        <nav className="glass-card p-1.5 rounded-full flex gap-0.5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-2xl">
+        <nav className="glass-card p-1.5 md:p-3 rounded-full flex gap-0.5 md:gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-2xl">
           <NavButton 
             active={activeTab === 'dashboard'} 
             onClick={() => setActiveTab('dashboard')}
@@ -454,6 +429,54 @@ function App() {
                     />
                   ))}
                 </div>
+              </div>
+
+              {/* Cloud Sync Section */}
+              <div className="pt-4 border-t border-white/10 space-y-4">
+                <label className="text-xs font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
+                  <Globe size={14} />
+                  Sincronização em Nuvem
+                </label>
+                
+                {user ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-2xl">
+                      <img src={user.photoURL} alt={user.displayName} className="w-10 h-10 rounded-full border border-primary/30" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-black text-text-color truncate">{user.displayName}</p>
+                        <p className="text-[9px] text-text-dim truncate">{user.email}</p>
+                      </div>
+                      <button 
+                        onClick={handleLogout}
+                        className="p-2 hover:bg-accent/10 text-accent rounded-lg transition-colors"
+                        title="Sair"
+                      >
+                        <LogOut size={18} />
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-center text-text-dim italic">
+                      Seus dados estão protegidos e sincronizados.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4 space-y-3">
+                      <p className="text-[10px] font-medium text-text-dim leading-relaxed">
+                        Seu progresso está sendo salvo apenas neste dispositivo. Entre com o Google para salvar na nuvem e acessar de qualquer lugar.
+                      </p>
+                      <button 
+                        onClick={handleLogin}
+                        className="w-full py-3 bg-white text-black rounded-xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2"
+                      >
+                        <User size={16} />
+                        Entrar com Google
+                      </button>
+                      {authError && (
+                        <p className="text-[9px] text-accent text-center font-bold">Erro: {authError}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Support Project */}

@@ -1,6 +1,7 @@
 import { Award, Footprints, User, Sparkles, Zap, Shield, Trophy, RefreshCcw, History, Flame, Target, Star, TrendingUp, Globe, Users } from 'lucide-react';
 import { ACHIEVEMENTS, getAchievements, getAchievementProgress } from '../lib/stickers';
 import { translations } from '../lib/translations';
+import { motion } from 'framer-motion';
 
 const IconMap = {
   Footprints, User, Award, Sparkles, Zap, Shield, Trophy, RefreshCcw, History, Flame, Target, Star, TrendingUp, Globe, UsersIcon: Users
@@ -13,17 +14,52 @@ function Achievements({ collection, lang = 'pt' }) {
 
   return (
     <div className="space-y-8 animate-fade-in pb-20">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-black text-text-color tracking-tight uppercase">{t.achievements}</h1>
-        <p className="text-text-dim text-sm font-medium leading-relaxed">
-          {lang === 'pt' ? 'Sua jornada tática e conquistas como colecionador.' : lang === 'en' ? 'Your tactical journey and achievements as a collector.' : 'Tu viaje táctico y logros como coleccionador.'}
-        </p>
+      <header className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black text-text-color tracking-tight uppercase">{t.achievements}</h1>
+          <p className="text-text-dim text-sm font-medium leading-relaxed">
+            {lang === 'pt' ? 'Sua jornada tática e conquistas como colecionador.' : lang === 'en' ? 'Your tactical journey and achievements as a collector.' : 'Tu viaje táctico y logros como coleccionador.'}
+          </p>
+        </div>
+
+        {/* Master Progress Bar */}
+        <div className="glass-card p-6 border-2 border-primary/20 bg-primary/5 space-y-4">
+          <div className="flex justify-between items-end">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/20 rounded-lg">
+                <Trophy size={18} className="text-primary" />
+              </div>
+              <span className="text-sm font-black text-text-color uppercase tracking-tight">Progreso General</span>
+            </div>
+            <span className="text-lg font-black text-primary">
+              {unlockedAchievements.size} / {ACHIEVEMENTS.length}
+            </span>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="h-3 bg-black/40 rounded-full overflow-hidden border border-white/5 p-0.5">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${(unlockedAchievements.size / ACHIEVEMENTS.length) * 100}%` }}
+                className="h-full bg-gradient-to-r from-primary via-secondary to-primary bg-[length:200%_100%] animate-shimmer rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]"
+              />
+            </div>
+            <div className="flex justify-between items-center px-1">
+              <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                Estatus de la Carrera
+              </p>
+              <p className="text-[10px] font-black text-text-color uppercase">
+                {Math.floor((unlockedAchievements.size / ACHIEVEMENTS.length) * 100)}% Completado
+              </p>
+            </div>
+          </div>
+        </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {ACHIEVEMENTS.map(ach => {
           const isUnlocked = unlockedAchievements.has(ach.id);
-          const Icon = IconMap[ach.icon] || Award;
+          const Icon = IconMap[ach.icon] || IconMap.UsersIcon || Award;
           const prog = progressMap[ach.id] || { current: 0, target: 1 };
           const percent = Math.min(100, Math.floor((prog.current / prog.target) * 100));
           

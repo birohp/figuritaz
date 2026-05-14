@@ -140,8 +140,8 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
         </div>
       </div>
 
-      {/* Grid of Tactical Metrics */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Grid of Tactical Metrics & Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece shadow-md border-white/5">
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-black text-text-color">{stats.coladas}</span>
@@ -160,10 +160,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
           <span className="text-[10px] font-black text-text-dim uppercase tracking-widest mt-1">{t.repetidas}</span>
           <span className="text-[9px] font-black text-text-dim uppercase tracking-tighter mt-1 opacity-70">(Clicar)</span>
         </button>
-      </div>
 
-      {/* Actions Grid */}
-      <div className="grid grid-cols-2 gap-4">
         {/* Comparison Button */}
         <button 
           onClick={() => setIsCompareOpen(true)}
@@ -195,7 +192,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Packets Card */}
         <div className="glass-card p-4 border-l-4 border-l-secondary relative overflow-hidden group shadow-lg">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
             <ShoppingBag size={48} className="text-secondary" />
           </div>
           
@@ -208,18 +205,18 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
               </div>
             </div>
             
-            <div className="flex items-center gap-2 bg-black/10 p-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl">
               <button 
                 onClick={() => onUpdatePackets(Math.max(0, packets - 1))}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/20 transition-colors text-text-dim"
+                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/20 active:bg-black/30 transition-all text-text-dim"
               >
-                <Minus size={12} />
+                <Minus size={16} />
               </button>
               <button 
                 onClick={() => onUpdatePackets(packets + 1)}
-                className="w-6 h-6 flex items-center justify-center rounded bg-secondary/20 hover:bg-secondary/30 transition-colors text-secondary"
+                className="w-10 h-10 flex items-center justify-center rounded-lg bg-secondary/20 hover:bg-secondary/30 active:scale-95 transition-all text-secondary"
               >
-                <Plus size={12} />
+                <Plus size={16} />
               </button>
             </div>
           </div>

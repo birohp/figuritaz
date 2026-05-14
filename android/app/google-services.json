@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "443854062825",
+    "project_id": "figuritas-33653",
+    "storage_bucket": "figuritas-33653.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443854062825:android:671fc492ba5feecb325c78",
+        "android_client_info": {
+          "package_name": "com.birohp.figuritaz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "443854062825-v93t5tav50ajr6vf94qck3bjhhp3mobr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.birohp.figuritaz",
+            "certificate_hash": "a2aaf4d3333b72c8294e9ffaadd16ddad8ecc10a"
+          }
+        },
+        {
+          "client_id": "443854062825-uh7pgd2b9udrll7kl0stm41sat6682dj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCw23A7DrYfaRx1yzzOuA-UI16y81KMzus"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "443854062825-uh7pgd2b9udrll7kl0stm41sat6682dj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "443854062825-f2j1ovuca19vao2u7ej32e9mv5vsflq4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.birohp.figuritaz"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443854062825:android:45ff355181d065e8325c78",
+        "android_client_info": {
+          "package_name": "com.figuritaz.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "443854062825-uh7pgd2b9udrll7kl0stm41sat6682dj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCw23A7DrYfaRx1yzzOuA-UI16y81KMzus"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "443854062825-uh7pgd2b9udrll7kl0stm41sat6682dj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "443854062825-f2j1ovuca19vao2u7ej32e9mv5vsflq4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.birohp.figuritaz"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

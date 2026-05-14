@@ -136,7 +136,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
 
       {/* Group View */}
       {!selectedGroup && !searchTerm && (
-        <div className="grid grid-cols-2 gap-4 pb-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-10">
           {groups.map(group => {
             const teams = CATEGORIES.filter(c => c.group === group);
             const isSpecial = group === 'FIFA World Cup' || group === 'Coca-Cola';
@@ -204,7 +204,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
             </div>
           )}
 
-          <div className="grid grid-cols-4 sm:grid-cols-5 gap-4 pb-10">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4 pb-10">
             {filteredStickers.map(code => {
               const data = collection[code] || { status: 'none', repeated: 0 };
               const isShiny = SHINY_CODES.includes(code);

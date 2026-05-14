@@ -99,99 +99,102 @@ function Stats({ collection, lang = 'pt', settings }) {
       </section>
 
 
-      {/* Groups Ranking */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
-          <Users className="text-primary" size={18} />
-          {t.topGroups}
-        </h2>
-        <div className="space-y-2">
-          {topGroups.map(group => (
-            <div key={group.name} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-primary transition-all relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
-                <Users size={48} className="text-primary" />
-              </div>
-              <div className="flex items-center gap-3">
-                {/* Group Flags (Perfect 2x2 Grid) */}
-                <div className="grid grid-cols-2 grid-rows-2 w-10 h-8 rounded-lg overflow-hidden border border-surface-border bg-black/20 shrink-0">
-                  {[0, 1, 2, 3].map((i) => (
-                    <div key={i} className="w-full h-full bg-black/5 border-[0.5px] border-white/5 flex items-center justify-center">
-                       {group.flags[i] ? (
-                         <img 
-                           src={`https://flagcdn.com/w80/${group.flags[i]}.png`} 
-                           alt="flag" 
-                           className="w-full h-full object-cover"
-                         />
-                       ) : (
-                         <LayoutGrid size={6} className="text-text-dim opacity-20" />
-                       )}
+      {/* Grid for Groups and Teams (Side by side on Tablet) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Groups Ranking */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
+            <Users className="text-primary" size={18} />
+            {t.topGroups}
+          </h2>
+          <div className="space-y-2">
+            {topGroups.map(group => (
+              <div key={group.name} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-primary transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
+                  <Users size={48} className="text-primary" />
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Group Flags */}
+                  <div className="grid grid-cols-2 grid-rows-2 w-10 h-8 rounded-lg overflow-hidden border border-surface-border bg-black/20 shrink-0">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div key={i} className="w-full h-full bg-black/5 border-[0.5px] border-white/5 flex items-center justify-center">
+                         {group.flags[i] ? (
+                           <img 
+                             src={`https://flagcdn.com/w80/${group.flags[i]}.png`} 
+                             alt="flag" 
+                             className="w-full h-full object-cover"
+                           />
+                         ) : (
+                           <LayoutGrid size={6} className="text-text-dim opacity-20" />
+                         )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0 pr-4">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">{group.name}</h3>
+                      <span className="text-[12px] font-black text-primary shrink-0">{group.percent.toFixed(0)}%</span>
                     </div>
-                  ))}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">{group.name}</h3>
-                    <span className="text-[12px] font-black text-primary shrink-0">{group.percent.toFixed(0)}%</span>
-                  </div>
-                  <div className="w-44 h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
-                    <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${group.percent}%` }} />
+                    <div className="w-full h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
+                      <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${group.percent}%` }} />
+                    </div>
                   </div>
                 </div>
+                <div className="text-right ml-4">
+                  {group.percent === 100 ? <CheckCircle size={18} className="text-green-500" /> : (
+                    <div className="flex items-center gap-1 font-black">
+                      <span className="text-lg text-text-color">{group.collected}</span>
+                      <span className="text-sm text-text-dim opacity-50">/ {group.total}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="text-right ml-4">
-                {group.percent === 100 ? <CheckCircle size={18} className="text-green-500" /> : (
-                  <div className="flex items-center gap-1 font-black">
-                    <span className="text-lg text-text-color">{group.collected}</span>
-                    <span className="text-sm text-text-dim opacity-50">/ {group.total}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
 
-      {/* Teams Ranking */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
-          <Trophy className="text-secondary" size={18} />
-          {t.topTeams}
-        </h2>
-        <div className="grid grid-cols-1 gap-2">
-          {topTeams.map(team => (
-            <div key={team.id} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-secondary transition-all relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
-                <Trophy size={48} className="text-secondary" />
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-8 rounded-lg bg-surface-color overflow-hidden flex items-center justify-center border border-surface-border shadow-inner shrink-0">
-                   {team.flag && (
-                     <img src={`https://flagcdn.com/w160/${team.flag}.png`} alt={team.name} className="w-full h-full object-cover" />
-                   )}
+        {/* Teams Ranking */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
+            <Trophy className="text-secondary" size={18} />
+            {t.topTeams}
+          </h2>
+          <div className="space-y-2">
+            {topTeams.map(team => (
+              <div key={team.id} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-secondary transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
+                  <Trophy size={48} className="text-secondary" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-black text-text-color text-sm leading-tight truncate">{team.name}</h3>
-                    <span className="text-[12px] font-black text-secondary shrink-0">{team.percent.toFixed(0)}%</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-8 rounded-lg bg-surface-color overflow-hidden flex items-center justify-center border border-surface-border shadow-inner shrink-0">
+                     {team.flag && (
+                       <img src={`https://flagcdn.com/w160/${team.flag}.png`} alt={team.name} className="w-full h-full object-cover" />
+                     )}
                   </div>
-                  <div className="w-44 h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
-                    <div className="h-full bg-secondary transition-all duration-1000" style={{ width: `${team.percent}%` }} />
+                  <div className="flex-1 min-w-0 pr-4">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-text-color text-sm leading-tight truncate">{team.name}</h3>
+                      <span className="text-[12px] font-black text-secondary shrink-0">{team.percent.toFixed(0)}%</span>
+                    </div>
+                    <div className="w-full h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
+                      <div className="h-full bg-secondary transition-all duration-1000" style={{ width: `${team.percent}%` }} />
+                    </div>
                   </div>
                 </div>
+                <div className="text-right ml-4">
+                  {team.percent === 100 ? <CheckCircle size={18} className="text-green-500" /> : (
+                    <div className="flex items-center gap-1 font-black">
+                      <span className="text-lg text-text-color">{team.collected}</span>
+                      <span className="text-sm text-text-dim opacity-50">/ {team.total}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="text-right ml-4">
-                {team.percent === 100 ? <CheckCircle size={18} className="text-green-500" /> : (
-                  <div className="flex items-center gap-1 font-black">
-                    <span className="text-lg text-text-color">{team.collected}</span>
-                    <span className="text-sm text-text-dim opacity-50">/ {team.total}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      </div>
 
       {/* Special Sections Ranking */}
       <section className="space-y-3">
@@ -199,7 +202,7 @@ function Stats({ collection, lang = 'pt', settings }) {
           <Sparkles className="text-accent" size={18} />
           {t.specials}
         </h2>
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {specials.map(special => (
             <div key={special.id} className="glass-card py-2.5 px-3 flex items-center justify-between group hover:border-accent transition-all relative overflow-hidden">
               <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
@@ -215,12 +218,12 @@ function Stats({ collection, lang = 'pt', settings }) {
                      <Star size={16} className="text-accent" />
                    )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pr-4">
                   <div className="flex items-center gap-2">
                     <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">{special.name}</h3>
                     <span className="text-[12px] font-black text-accent shrink-0">{special.percent.toFixed(0)}%</span>
                   </div>
-                  <div className="w-44 h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
+                  <div className="w-full h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
                     <div className="h-full bg-accent transition-all duration-1000" style={{ width: `${special.percent}%` }} />
                   </div>
                 </div>
