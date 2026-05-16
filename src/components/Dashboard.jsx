@@ -175,7 +175,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
     if (!summaryRef.current) return;
     try {
       const canvas = await html2canvas(summaryRef.current, {
-        backgroundColor: '#064e3b',
+        backgroundColor: settings.boardColor || '#064e3b',
         scale: 2,
         useCORS: true
       });
@@ -631,25 +631,25 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md px-6 py-12 flex justify-center items-start"
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="relative w-full max-w-sm"
+              className="relative w-full max-w-sm flex flex-col gap-6"
             >
               <button 
                 onClick={() => setIsSummaryOpen(false)}
-                className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"
+                className="fixed top-6 right-6 p-2 text-white/50 hover:text-white transition-colors bg-white/10 rounded-full backdrop-blur-md z-[60]"
               >
                 <X size={24} />
               </button>
 
               <div 
                 ref={summaryRef}
-                className="relative glass-card p-8 flex flex-col items-center text-center gap-6 overflow-hidden border-2 border-white/10"
+                className="relative glass-card p-6 flex flex-col items-center text-center gap-4 overflow-hidden border-2 border-white/10"
                 style={{ 
-                  background: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)',
+                  background: `linear-gradient(135deg, ${settings.boardColor || '#064e3b'} 0%, #022c22 100%)`,
                 }}
               >
                 {/* Background Pattern (Football Grid) */}
@@ -670,18 +670,18 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                 />
 
                 {/* Branding */}
-                <div className="relative z-10 flex flex-col items-center gap-1 mb-2">
-                  <div className="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-full border border-white/5 backdrop-blur-md">
+                <div className="relative z-10 flex flex-col items-center gap-1.5 mb-1">
+                  <div className="flex items-center gap-2 bg-black/20 px-3 py-1 rounded-full border border-white/5 backdrop-blur-md scale-90">
                     <div className="w-5 h-5 bg-white rounded-md flex items-center justify-center p-1 shadow-lg shadow-white/10">
                       <img src="/pwa-192x192.png" alt="Logo" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">FiguritaZ</span>
                   </div>
-                  <span className="text-[12px] font-black text-secondary uppercase tracking-[0.4em] drop-shadow-md">FIFA WORLD CUP</span>
+                  <span className="text-[13px] font-black text-primary uppercase tracking-[0.5em] opacity-80 leading-none">FIFA WORLD CUP</span>
                 </div>
 
-                <div className="relative z-10 space-y-1">
-                  <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em] drop-shadow-lg">Progresso do Álbum</span>
+                <div className="relative z-10 space-y-0">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em] drop-shadow-lg leading-none">Progresso do Álbum</span>
                   <div className="relative inline-block">
                     <h2 className="text-7xl font-black text-white tracking-tighter drop-shadow-[0_10px_30px_rgba(16,185,129,0.3)]">
                       {stats.porcentagem}%
@@ -696,7 +696,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                   </div>
                 </div>
 
-                <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-3 w-full mt-6">
+                <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-3 w-full mt-2">
                   {/* Quadrinho 1: Coladas */}
                   <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-left relative overflow-hidden group">
                     <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -742,7 +742,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                     <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
                       <Star size={40} className="text-white" />
                     </div>
-                    <p className="text-[9px] font-black text-accent uppercase tracking-widest mb-1">{t.shinyRank}</p>
+                    <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mb-1">{t.shinyRank}</p>
                     <div className="flex items-baseline gap-1">
                       <p className="text-2xl font-black text-white">{stats.coladasBrilhantes}</p>
                       <p className="text-[13px] font-bold text-white/30">/ {stats.totalBrilhantes}</p>
@@ -775,7 +775,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                     <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
                       <LayoutGrid size={40} className="text-white" />
                     </div>
-                    <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 leading-tight">FWC + Coca</p>
+                    <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1 leading-tight">FWC + Coca</p>
                     {(() => {
                       const specials = CATEGORIES.filter(c => !c.group.startsWith('Grupo'));
                       const total = specials.flatMap(c => c.stickers).length;
@@ -790,7 +790,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                   </div>
                 </div>
 
-                <div className="relative z-10 flex flex-col items-center gap-1 mt-6 pt-6 border-t border-white/10 w-full">
+                <div className="relative z-10 flex flex-col items-center gap-1 mt-1 pt-1 border-t border-white/10 w-full">
                   <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">
                     Crie o seu resumo em:
                   </p>
