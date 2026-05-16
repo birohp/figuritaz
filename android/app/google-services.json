@@ -58,6 +58,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "443854062825-1nt625d2q6dfhslh1bqmrtiqslc4bofp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.figuritaz.app",
+            "certificate_hash": "a2aaf4d3333b72c8294e9ffaadd16ddad8ecc10a"
+          }
+        },
+        {
           "client_id": "443854062825-uh7pgd2b9udrll7kl0stm41sat6682dj.apps.googleusercontent.com",
           "client_type": 3
         }

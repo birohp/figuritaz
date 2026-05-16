@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { auth, googleProvider, db } from './lib/firebase';
-import { signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithCredential, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3, Award, Heart, Coffee, ExternalLink } from 'lucide-react';
 import AdBanner from './components/AdBanner';
 import Dashboard from './components/Dashboard';
@@ -185,8 +186,22 @@ function App() {
       const isNative = typeof window !== 'undefined' && (window.Capacitor?.isNativePlatform?.() || window.location.protocol === 'capacitor:');
       
       if (isNative) {
-        setAuthStatus("Redirecionando (Mobile)...");
-        await signInWithRedirect(auth, googleProvider);
+        setAuthStatus("Iniciando login...");
+        try {
+          const result = await FirebaseAuthentication.signInWithGoogle();
+          
+          if (result.credential) {
+            setAuthStatus("Sincronizando...");
+            const credential = GoogleAuthProvider.credential(result.credential.idToken);
+            await signInWithCredential(auth, credential);
+            setAuthStatus("Sucesso!");
+          } else {
+            throw new Error("Não foi possível obter as credenciais do Google.");
+          }
+        } catch (nativeError) {
+          console.error("Erro no login nativo:", nativeError);
+          throw nativeError;
+        }
         return;
       }
 
@@ -196,20 +211,18 @@ function App() {
     } catch (error) {
       console.error("Erro no login:", error);
       
+      // Handle Capacitor-specific errors
+      if (error.message?.includes('cancel')) {
+        setAuthStatus("Login cancelado");
+        return;
+      }
+
       if (
         error.code === 'auth/popup-blocked' || 
-        error.code === 'auth/cancelled-popup-request' || 
-        error.code === 'auth/popup-closed-by-user'
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request'
       ) {
         setAuthStatus("Redirecionando...");
-        try {
-          await signInWithRedirect(auth, googleProvider);
-        } catch (e) {
-          setAuthError(e.code);
-          setAuthStatus("Erro: " + e.code);
-        }
-      } else {
-        // Log technical failure
         setAuthError(error.code);
         setAuthStatus("Erro: " + error.code);
       }
