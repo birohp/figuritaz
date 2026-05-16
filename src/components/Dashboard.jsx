@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { calculateStats, ALL_VALID_CODES, SHINY_CODES, calculateCompletionEstimate } from '../lib/stickers';
-import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet, ExternalLink } from 'lucide-react';
+import { calculateStats, ALL_VALID_CODES, SHINY_CODES, calculateCompletionEstimate, getAchievements, ACHIEVEMENTS } from '../lib/stickers';
+import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet, ExternalLink, Award, BarChart3, Download, LayoutGrid } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CATEGORIES } from '../lib/stickers';
+import html2canvas from 'html2canvas';
 
-function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, settings, onUpdateCollection }) {
+function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, settings, onUpdateCollection, setActiveTab }) {
   const stats = calculateStats(collection);
   const t = translations[lang];
   const [copied, setCopied] = useState(false);
@@ -68,9 +70,12 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
   };
 
   const handleShare = async () => {
-    const repetidas = Object.entries(collection)
-      .filter(([_, data]) => data.repeated > 0)
-      .map(([code, data]) => `${code}${data.repeated > 1 ? ` (x${data.repeated})` : ''}`)
+    const repetidas = ALL_VALID_CODES
+      .filter(code => collection[code]?.repeated > 0)
+      .map(code => {
+        const data = collection[code];
+        return `${code}${data.repeated > 1 ? ` (x${data.repeated})` : ''}`;
+      })
       .join(', ');
 
     const shareText = repetidas || (lang === 'pt' ? 'Nenhuma repetida ainda.' : lang === 'en' ? 'No duplicates yet.' : 'Ninguna repetida aún.');
@@ -91,6 +96,8 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
     }
   };
 
+  const [analysisMode, setAnalysisMode] = useState('friend_repeated'); // or 'friend_wishlist'
+
   const handleAnalyze = () => {
     const foundCodes = pastedText.match(/[A-Z0-9]+/g) || [];
     const validFound = foundCodes
@@ -104,10 +111,94 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
       return;
     }
 
-    const iWant = uniqueFound.filter(code => !collection[code] || collection[code].status !== 'collected');
-    const iHave = uniqueFound.filter(code => collection[code] && collection[code].status === 'collected');
+    if (analysisMode === 'friend_repeated') {
+      // Amigo mandou o que ele TEM. Eu vejo o que me falta.
+      const iWant = uniqueFound.filter(code => !collection[code] || collection[code].status !== 'collected');
+      const iHave = uniqueFound.filter(code => collection[code] && collection[code].status === 'collected');
+      setAnalysis({ iWant, iHave });
+    } else {
+      // Amigo mandou o que ele PRECISA. Eu vejo o que eu tenho REPETIDA.
+      const canGive = uniqueFound.filter(code => collection[code] && collection[code].repeated > 0);
+      const cantGive = uniqueFound.filter(code => !collection[code] || collection[code].repeated === 0);
+      setAnalysis({ canGive, cantGive });
+    }
+  };
 
-    setAnalysis({ iWant, iHave });
+  const handleShareWishlist = async () => {
+    const missing = ALL_VALID_CODES
+      .filter(code => !collection[code] || collection[code].status !== 'collected')
+      .join(', ');
+
+    const shareText = `${t.wishlistTitle}\n\n${missing || (lang === 'pt' ? 'Nenhuma! Álbum completo!' : 'None! Album complete!')}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'FiguritaZ - Minha Wishlist',
+          text: shareText,
+        });
+      } catch (err) {
+        console.log('Erro ao compartilhar wishlist:', err);
+      }
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      setCopiedWishlist(true);
+      setTimeout(() => setCopiedWishlist(false), 2000);
+    }
+  };
+
+  const [copiedWishlist, setCopiedWishlist] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const summaryRef = React.useRef(null);
+
+  const getTopTeam = () => {
+    const teams = CATEGORIES.filter(c => c.group.startsWith('Grupo'));
+    const teamStats = teams.map(cat => {
+      const total = cat.stickers.length;
+      const collected = cat.stickers.filter(code => collection[code] && collection[code].status === 'collected').length;
+      return { ...cat, collected, total };
+    });
+    
+    const completeTeams = teamStats.filter(t => t.collected === t.total);
+    const sorted = teamStats.sort((a, b) => (b.collected / b.total) - (a.collected / a.total));
+    
+    return {
+      best: sorted[0] || { name: '---', collected: 0, total: 0 },
+      completeCount: completeTeams.length,
+      totalTeams: teams.length
+    };
+  };
+
+  const teamData = getTopTeam();
+
+  const handleShareSummary = async (isDownload = false) => {
+    if (!summaryRef.current) return;
+    try {
+      const canvas = await html2canvas(summaryRef.current, {
+        backgroundColor: '#064e3b',
+        scale: 2,
+        useCORS: true
+      });
+      
+      if (isDownload) {
+        const link = document.createElement('a');
+        link.download = `meu-status-figuritaz.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } else {
+        canvas.toBlob(async (blob) => {
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'status.png', { type: 'image/png' })] })) {
+            await navigator.share({
+              files: [new File([blob], 'status.png', { type: 'image/png' })],
+              title: 'Meu Status no FiguritaZ!',
+              text: `Confira meu progresso no FiguritaZ! Já completei ${stats.porcentagem}% do álbum! 🏆`
+            });
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Error generating summary:', err);
+    }
   };
 
   return (
@@ -164,12 +255,12 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
         {/* Comparison Button */}
         <button 
           onClick={() => setIsCompareOpen(true)}
-          className="glass-card p-4 flex flex-col items-center justify-center gap-2 hover:border-secondary transition-all active:scale-[0.98] group"
+          className="glass-card p-4 flex flex-col items-center justify-center gap-2 hover:border-secondary transition-all active:scale-[0.98] group min-h-[110px]"
         >
           <div className="p-3 rounded-full bg-secondary/20 group-hover:bg-secondary/30 transition-colors">
             <ClipboardList className="text-secondary" size={20} />
           </div>
-          <span className="font-bold text-xs text-text-color uppercase tracking-tighter">
+          <span className="font-black text-[11px] text-text-color uppercase tracking-tight text-center leading-tight">
             {t.checkList}
           </span>
         </button>
@@ -177,13 +268,39 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
         {/* Share Button */}
         <button 
           onClick={handleShare}
-          className="glass-card p-4 flex flex-col items-center justify-center gap-2 hover:border-primary transition-all active:scale-[0.98] group"
+          className="glass-card p-4 flex flex-col items-center justify-center gap-2 hover:border-primary transition-all active:scale-[0.98] group min-h-[110px]"
         >
           <div className={`p-3 rounded-full transition-colors ${copied ? 'bg-green-500/20' : 'bg-primary/20 group-hover:bg-primary/30'}`}>
-            {copied ? <Check className="text-green-500" size={20} /> : <Share2 className="text-primary" size={20} />}
+            {copied ? <Check className="text-green-500" size={20} /> : <Repeat className="text-primary" size={20} />}
           </div>
-          <span className="font-bold text-xs text-text-color uppercase tracking-tighter">
+          <span className="font-black text-[11px] text-text-color uppercase tracking-tight text-center leading-tight">
             {copied ? t.shareSuccess : t.share}
+          </span>
+        </button>
+
+        {/* Wishlist Button */}
+        <button 
+          onClick={handleShareWishlist}
+          className="glass-card p-4 flex flex-col items-center justify-center gap-2 hover:border-accent transition-all active:scale-[0.98] group min-h-[110px]"
+        >
+          <div className={`p-3 rounded-full transition-colors ${copiedWishlist ? 'bg-green-500/20' : 'bg-accent/20 group-hover:bg-accent/30'}`}>
+            {copiedWishlist ? <Check className="text-green-500" size={20} /> : <Calculator className="text-accent" size={20} />}
+          </div>
+          <span className="font-black text-[11px] text-text-color uppercase tracking-tight text-center leading-tight">
+            {copiedWishlist ? t.copySuccess : t.wishlist}
+          </span>
+        </button>
+
+        {/* Album Summary Shortcut */}
+        <button 
+          onClick={() => setIsSummaryOpen(true)}
+          className="glass-card p-4 flex flex-col items-center justify-center gap-2 hover:border-yellow-400 transition-all active:scale-[0.98] group min-h-[110px]"
+        >
+          <div className="p-3 rounded-full bg-yellow-400/20 group-hover:bg-yellow-400/30 transition-colors">
+            <BarChart3 className="text-yellow-400" size={20} />
+          </div>
+          <span className="font-black text-[11px] text-text-color uppercase tracking-tight text-center leading-tight">
+            {t.summary}
           </span>
         </button>
       </div>
@@ -291,6 +408,26 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
 
               {!analysis ? (
                 <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+                  {/* Mode Selector */}
+                  <div className="flex p-1 bg-black/20 rounded-xl border border-white/5">
+                    <button 
+                      onClick={() => setAnalysisMode('friend_repeated')}
+                      className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${analysisMode === 'friend_repeated' ? 'bg-secondary text-white shadow-lg' : 'text-text-dim'}`}
+                    >
+                      {t.friendRepeated}
+                    </button>
+                    <button 
+                      onClick={() => setAnalysisMode('friend_wishlist')}
+                      className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${analysisMode === 'friend_wishlist' ? 'bg-accent text-white shadow-lg' : 'text-text-dim'}`}
+                    >
+                      {t.friendWishlist}
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] text-text-dim font-bold uppercase tracking-tight text-center px-4">
+                    {analysisMode === 'friend_repeated' ? t.friendRepeatedHint : t.friendWishlistHint}
+                  </p>
+
                   <textarea
                     className="flex-1 w-full bg-black/20 border border-white/10 rounded-xl p-4 text-sm focus:outline-none focus:border-secondary transition-all resize-none text-text-color placeholder:text-text-dim"
                     placeholder={t.pasteHere}
@@ -299,7 +436,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                   />
                   <button 
                     onClick={handleAnalyze}
-                    className="w-full bg-secondary py-4 rounded-xl font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className={`w-full py-4 rounded-xl font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${analysisMode === 'friend_repeated' ? 'bg-secondary' : 'bg-accent'}`}
                   >
                     <Send size={18} />
                     {t.analyze}
@@ -315,36 +452,73 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                     </div>
                   ) : (
                     <>
-                      {/* I Want (Missing) */}
-                      <div className="space-y-3">
-                        <h3 className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-widest">
-                          <Check size={16} />
-                          {t.iWant} ({analysis.iWant.length})
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {analysis.iWant.map(code => (
-                            <span key={code} className="bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full text-xs font-black">
-                              {code}
-                            </span>
-                          ))}
-                          {analysis.iWant.length === 0 && <span className="text-text-dim text-xs italic">Nenhuma figurinha nova encontrada.</span>}
-                        </div>
-                      </div>
+                      {/* Mode A: Friend's Duplicates */}
+                      {analysisMode === 'friend_repeated' && (
+                        <>
+                          <div className="space-y-3">
+                            <h3 className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-widest">
+                              <Check size={16} />
+                              {t.iWant} ({analysis.iWant.length})
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.iWant.map(code => (
+                                <span key={code} className="bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full text-xs font-black">
+                                  {code}
+                                </span>
+                              ))}
+                              {analysis.iWant.length === 0 && <span className="text-text-dim text-xs italic">Nenhuma figurinha nova encontrada.</span>}
+                            </div>
+                          </div>
 
-                      {/* I Have (Already Owned) */}
-                      <div className="space-y-3 opacity-60">
-                        <h3 className="text-sm font-black text-text-dim flex items-center gap-2 uppercase tracking-widest">
-                          <X size={16} />
-                          {t.iHave} ({analysis.iHave.length})
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {analysis.iHave.map(code => (
-                            <span key={code} className="bg-white/5 text-text-dim border border-white/10 px-3 py-1 rounded-full text-xs font-bold line-through">
-                              {code}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                          <div className="space-y-3 opacity-60">
+                            <h3 className="text-sm font-black text-text-dim flex items-center gap-2 uppercase tracking-widest">
+                              <X size={16} />
+                              {t.iHave} ({analysis.iHave.length})
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.iHave.map(code => (
+                                <span key={code} className="bg-white/5 text-text-dim border border-white/10 px-3 py-1 rounded-full text-xs font-bold line-through">
+                                  {code}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Mode B: Friend's Wishlist */}
+                      {analysisMode === 'friend_wishlist' && (
+                        <>
+                          <div className="space-y-3">
+                            <h3 className="text-sm font-black text-accent flex items-center gap-2 uppercase tracking-widest">
+                              <Trophy size={16} />
+                              {t.canGive} ({analysis.canGive.length})
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.canGive.map(code => (
+                                <span key={code} className="bg-accent/20 text-accent border border-accent/30 px-3 py-1 rounded-full text-xs font-black">
+                                  {code}
+                                </span>
+                              ))}
+                              {analysis.canGive.length === 0 && <span className="text-text-dim text-xs italic">{t.noTradeMatches}</span>}
+                            </div>
+                          </div>
+
+                          <div className="space-y-3 opacity-40">
+                            <h3 className="text-sm font-black text-text-dim flex items-center gap-2 uppercase tracking-widest">
+                              <X size={16} />
+                              {t.cantGive} ({analysis.cantGive.length})
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.cantGive.map(code => (
+                                <span key={code} className="bg-white/5 text-text-dim border border-white/10 px-3 py-1 rounded-full text-xs font-bold">
+                                  {code}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
 
                       <button 
                         onClick={() => setAnalysis(null)}
@@ -445,6 +619,206 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
               >
                 {t.close}
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Album Summary Modal */}
+      <AnimatePresence>
+        {isSummaryOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="relative w-full max-w-sm"
+            >
+              <button 
+                onClick={() => setIsSummaryOpen(false)}
+                className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+
+              <div 
+                ref={summaryRef}
+                className="relative glass-card p-8 flex flex-col items-center text-center gap-6 overflow-hidden border-2 border-white/10"
+                style={{ 
+                  background: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)',
+                }}
+              >
+                {/* Background Pattern (Football Grid) */}
+                <div className="absolute inset-0 opacity-10 pointer-events-none" 
+                  style={{ 
+                    backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+                    backgroundSize: '30px 30px'
+                  }} 
+                />
+                
+                {/* Holographic Shine Overlay */}
+                <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay animate-pulse"
+                  style={{
+                    background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.3) 45%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.3) 55%, transparent 60%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'holographic-shine 3s infinite linear'
+                  }}
+                />
+
+                {/* Branding */}
+                <div className="relative z-10 flex flex-col items-center gap-1 mb-2">
+                  <div className="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-full border border-white/5 backdrop-blur-md">
+                    <div className="w-5 h-5 bg-white rounded-md flex items-center justify-center p-1 shadow-lg shadow-white/10">
+                      <img src="/pwa-192x192.png" alt="Logo" className="w-full h-full object-contain" />
+                    </div>
+                    <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">FiguritaZ</span>
+                  </div>
+                  <span className="text-[12px] font-black text-secondary uppercase tracking-[0.4em] drop-shadow-md">FIFA WORLD CUP</span>
+                </div>
+
+                <div className="relative z-10 space-y-1">
+                  <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em] drop-shadow-lg">Progresso do Álbum</span>
+                  <div className="relative inline-block">
+                    <h2 className="text-7xl font-black text-white tracking-tighter drop-shadow-[0_10px_30px_rgba(16,185,129,0.3)]">
+                      {stats.porcentagem}%
+                    </h2>
+                    <div className="absolute -bottom-2 left-0 right-0 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${stats.porcentagem}%` }}
+                        className="h-full bg-gradient-to-r from-primary via-secondary to-primary" 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-3 w-full mt-6">
+                  {/* Quadrinho 1: Coladas */}
+                  <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-left relative overflow-hidden group">
+                    <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Check size={40} className="text-white" />
+                    </div>
+                    <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">{t.coladas}</p>
+                    <div className="flex items-baseline gap-1">
+                      <p className="text-2xl font-black text-white">{stats.coladas}</p>
+                      <p className="text-[13px] font-bold text-white/30">/ {stats.total}</p>
+                    </div>
+                  </div>
+
+                  {/* Quadrinho 2: Seleção mais completa */}
+                  <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-left relative overflow-hidden group">
+                    <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Trophy size={40} className="text-white" />
+                    </div>
+                    {teamData.completeCount > 0 ? (
+                      <>
+                        <p className="text-[9px] font-black text-secondary uppercase tracking-widest mb-1 leading-tight">
+                          {lang === 'pt' ? 'Seleções Completas' : 'Completed Teams'}
+                        </p>
+                        <p className="text-sm font-black text-white truncate leading-tight mt-1">Total</p>
+                        <div className="flex items-baseline gap-1 mt-1">
+                          <p className="text-2xl font-black text-white">{teamData.completeCount}</p>
+                          <p className="text-[13px] font-bold text-white/30">/ {teamData.totalTeams}</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[9px] font-black text-secondary uppercase tracking-widest mb-1 leading-tight">{t.topTeam}</p>
+                        <p className="text-sm font-black text-white truncate leading-tight mt-1">{teamData.best.name}</p>
+                        <div className="flex items-baseline gap-1 mt-1">
+                          <p className="text-2xl font-black text-white">{teamData.best.collected}</p>
+                          <p className="text-[13px] font-bold text-white/30">/ {teamData.best.total}</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Quadrinho 3: Brilhantes */}
+                  <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-left relative overflow-hidden group">
+                    <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Star size={40} className="text-white" />
+                    </div>
+                    <p className="text-[9px] font-black text-accent uppercase tracking-widest mb-1">{t.shinyRank}</p>
+                    <div className="flex items-baseline gap-1">
+                      <p className="text-2xl font-black text-white">{stats.coladasBrilhantes}</p>
+                      <p className="text-[13px] font-bold text-white/30">/ {stats.totalBrilhantes}</p>
+                    </div>
+                  </div>
+
+                  {/* Quadrinho 4: Repetidas */}
+                  <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-left relative overflow-hidden group">
+                    <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Repeat size={40} className="text-white" />
+                    </div>
+                    <p className="text-[9px] font-black text-white uppercase tracking-widest mb-1 opacity-50">{t.repetidas}</p>
+                    <p className="text-2xl font-black text-white">{stats.repetidas}</p>
+                  </div>
+
+                  {/* Quadrinho 5: Conquistas */}
+                  <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-left relative overflow-hidden group">
+                    <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Award size={40} className="text-white" />
+                    </div>
+                    <p className="text-[9px] font-black text-yellow-400 uppercase tracking-widest mb-1">{t.achievements}</p>
+                    <div className="flex items-baseline gap-1">
+                      <p className="text-2xl font-black text-white">{getAchievements(collection).size}</p>
+                      <p className="text-[13px] font-bold text-white/30">/ {ACHIEVEMENTS.length}</p>
+                    </div>
+                  </div>
+
+                  {/* Quadrinho 6: FWC + Coca */}
+                  <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-left relative overflow-hidden group">
+                    <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <LayoutGrid size={40} className="text-white" />
+                    </div>
+                    <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 leading-tight">FWC + Coca</p>
+                    {(() => {
+                      const specials = CATEGORIES.filter(c => !c.group.startsWith('Grupo'));
+                      const total = specials.flatMap(c => c.stickers).length;
+                      const collected = specials.flatMap(c => c.stickers).filter(code => collection[code]?.status === 'collected').length;
+                      return (
+                        <div className="flex items-baseline gap-1">
+                          <p className="text-2xl font-black text-white">{collected}</p>
+                          <p className="text-[13px] font-bold text-white/30">/ {total}</p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                <div className="relative z-10 flex flex-col items-center gap-1 mt-6 pt-6 border-t border-white/10 w-full">
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">
+                    Crie o seu resumo em:
+                  </p>
+                  <p className="text-sm font-black text-white tracking-widest">
+                    figuritaz.web.app
+                  </p>
+                </div>
+
+                {/* Corner Accents */}
+                <div className="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-white/10 to-transparent rounded-br-full" />
+                <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-white/10 to-transparent rounded-tl-full" />
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button 
+                  onClick={() => handleShareSummary(false)}
+                  className="flex-1 bg-primary text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-primary/20"
+                >
+                  <Share2 size={20} />
+                  {lang === 'pt' ? 'COMPARTILHAR' : 'SHARE'}
+                </button>
+                <button 
+                  onClick={() => handleShareSummary(true)}
+                  className="bg-white/10 text-white p-4 rounded-2xl active:scale-95 transition-all border border-white/10"
+                >
+                  <Download size={20} />
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

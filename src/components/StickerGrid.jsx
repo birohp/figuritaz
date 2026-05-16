@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CATEGORIES, ALL_VALID_CODES, SHINY_CODES } from '../lib/stickers';
 import { Plus, Minus, Check, Search, ChevronLeft, Trophy, Beer, Star, Users } from 'lucide-react';
 import { translations } from '../lib/translations';
+import confetti from 'canvas-confetti';
 
 // Sub-component for Flags/Logos to handle errors gracefully
 const TeamIcon = ({ team, isSpecial }) => {
@@ -46,6 +47,28 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
     const newStatus = current.status === 'collected' ? 'none' : 'collected';
     const newCollection = { ...collection, [number]: { ...current, status: newStatus } };
     onUpdate(newCollection);
+
+    // Haptic Feedback (Vibration)
+    if (newStatus === 'collected' && typeof window !== 'undefined' && window.navigator.vibrate) {
+      window.navigator.vibrate(40);
+    }
+
+    // Celebration logic when completing a category
+    if (newStatus === 'collected' && currentCategory) {
+      const isComplete = currentCategory.stickers.every(code => 
+        code === number ? true : collection[code]?.status === 'collected'
+      );
+      
+      if (isComplete) {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.7 },
+          colors: ['#10b981', '#3b82f6', '#f43f5e', '#fbbf24'],
+          zIndex: 999
+        });
+      }
+    }
   };
 
   const updateRepeated = (number, delta) => {
@@ -217,6 +240,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
                     }`}
                   onClick={() => toggleSticker(code)}
                 >
+                  {isShiny && <div className="shiny-holographic-inner" />}
                   {isShiny && (
                     <div className="absolute top-0.75 left-1/2 -translate-x-1/2 drop-shadow-[0_0_3px_rgba(250,204,21,0.5)]">
                       <Star size={10} className="text-yellow-400 fill-yellow-400" />

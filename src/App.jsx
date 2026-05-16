@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard';
 import StickerGrid from './components/StickerGrid';
 import Stats from './components/Stats';
 import Achievements from './components/Achievements';
+import AchievementShare from './components/AchievementShare';
 import { translations } from './lib/translations';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -180,22 +181,37 @@ function App() {
       // Force local persistence
       await setPersistence(auth, browserLocalPersistence);
       
+      // Detect if running as a native app (Android/iOS)
+      const isNative = typeof window !== 'undefined' && (window.Capacitor?.isNativePlatform?.() || window.location.protocol === 'capacitor:');
+      
+      if (isNative) {
+        setAuthStatus("Redirecionando (Mobile)...");
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
       setAuthStatus("Iniciando login...");
       // Try popup first
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Erro no login:", error);
       
-      if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+      if (
+        error.code === 'auth/popup-blocked' || 
+        error.code === 'auth/cancelled-popup-request' || 
+        error.code === 'auth/popup-closed-by-user'
+      ) {
         setAuthStatus("Redirecionando...");
         try {
           await signInWithRedirect(auth, googleProvider);
         } catch (e) {
           setAuthError(e.code);
+          setAuthStatus("Erro: " + e.code);
         }
       } else {
         // Log technical failure
         setAuthError(error.code);
+        setAuthStatus("Erro: " + error.code);
       }
     }
   };
@@ -250,6 +266,7 @@ function App() {
                 onUpdatePackets={updatePackets}
                 settings={settings}
                 onUpdateCollection={updateCollection}
+                setActiveTab={setActiveTab}
               />
             )}
             {activeTab === 'collection' && (
@@ -278,6 +295,8 @@ function App() {
       </main>
 
       <AdBanner lang={settings.lang} />
+
+      <AchievementShare collection={collection} lang={settings.lang} />
 
       {/* Navigation Bar */}
       <div className="fixed bottom-8 left-0 right-0 flex justify-center z-40 px-4">

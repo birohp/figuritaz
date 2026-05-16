@@ -53,7 +53,21 @@ export const translations = {
     totalInvested: "Total Investido",
     pricePerSticker: "Preço por Figurinha",
     brazil: "Brasil",
-    mexico: "México"
+    mexico: "México",
+    wishlist: "O que eu preciso",
+    wishlistTitle: "Figurinhas que me faltam:",
+    wishlistSuccess: "Lista copiada!",
+    friendRepeated: "Repetidas do Amigo",
+    friendWishlist: "Wishlist do Amigo",
+    friendRepeatedHint: "Cole a lista de figurinhas que seu amigo TEM para você ver o que te falta.",
+    friendWishlistHint: "Cole a lista de figurinhas que seu amigo PRECISA para ver o que você tem repetida para ele.",
+    canGive: "Posso dar para ele",
+    cantGive: "Não tenho para trocar",
+    noTradeMatches: "Você não tem nenhuma das figurinhas que ele precisa.",
+    copySuccess: "Lista Copiada!",
+    summary: "Resumo do Álbum",
+    summaryTitle: "Meu Status no FiguritaZ",
+    topTeam: "Seleção mais completa"
   },
   en: {
     dashboard: "Dashboard",
@@ -109,7 +123,21 @@ export const translations = {
     totalInvested: "Total Invested",
     pricePerSticker: "Price per Sticker",
     brazil: "Brazil",
-    mexico: "Mexico"
+    mexico: "Mexico",
+    wishlist: "My Wishlist",
+    wishlistTitle: "Stickers I need:",
+    wishlistSuccess: "List copied!",
+    friendRepeated: "Friend's Duplicates",
+    friendWishlist: "Friend's Wishlist",
+    friendRepeatedHint: "Paste the list of stickers your friend HAS to see what you need.",
+    friendWishlistHint: "Paste the list of stickers your friend NEEDS to see what duplicates you have for them.",
+    canGive: "I can give these",
+    cantGive: "I don't have these",
+    noTradeMatches: "You don't have any of the stickers they need.",
+    copySuccess: "List Copied!",
+    summary: "Album Summary",
+    summaryTitle: "My FiguritaZ Status",
+    topTeam: "Most complete team"
   },
   es: {
     dashboard: "Dashboard",
@@ -165,6 +193,20 @@ export const translations = {
     totalInvested: "Total Invertido",
     pricePerSticker: "Precio por Figurita",
     brazil: "Brasil",
-    mexico: "México"
+    mexico: "México",
+    wishlist: "Lo que necesito",
+    wishlistTitle: "FiguritaZ que me faltan:",
+    wishlistSuccess: "¡Lista copiada!",
+    friendRepeated: "Repetidas del Amigo",
+    friendWishlist: "Wishlist del Amigo",
+    friendRepeatedHint: "Pega la lista de figuritaZ que tu amigo TIENE para ver qué te falta.",
+    friendWishlistHint: "Pega la lista de figuritaZ que tu amigo NECESITA para ver qué repetidas tienes para él.",
+    canGive: "Puedo dar estas",
+    cantGive: "No tengo estas",
+    noTradeMatches: "No tienes ninguna de las figuritaZ que él necesita.",
+    copySuccess: "¡Lista Copiada!",
+    summary: "Resumen del Álbum",
+    summaryTitle: "Mi Estado en FiguritaZ",
+    topTeam: "Equipo más completo"
   }
 };
