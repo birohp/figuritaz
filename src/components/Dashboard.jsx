@@ -631,20 +631,15 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md px-6 py-12 flex justify-center items-start"
+            onClick={() => setIsSummaryOpen(false)}
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md px-6 py-12 flex justify-center items-start cursor-pointer"
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="relative w-full max-w-sm flex flex-col gap-6"
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-sm flex flex-col gap-6 cursor-default"
             >
-              <button 
-                onClick={() => setIsSummaryOpen(false)}
-                className="fixed top-6 right-6 p-2 text-white/50 hover:text-white transition-colors bg-white/10 rounded-full backdrop-blur-md z-[60]"
-              >
-                <X size={24} />
-              </button>
-
               <div 
                 ref={summaryRef}
                 className="relative glass-card p-6 flex flex-col items-center text-center gap-4 overflow-hidden border-2 border-white/10"
@@ -804,21 +799,6 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                 <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-white/10 to-transparent rounded-tl-full" />
               </div>
 
-              <div className="mt-6 flex gap-3">
-                <button 
-                  onClick={() => handleShareSummary(false)}
-                  className="flex-1 bg-primary text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-primary/20"
-                >
-                  <Share2 size={20} />
-                  {lang === 'pt' ? 'COMPARTILHAR' : 'SHARE'}
-                </button>
-                <button 
-                  onClick={() => handleShareSummary(true)}
-                  className="bg-white/10 text-white p-4 rounded-2xl active:scale-95 transition-all border border-white/10"
-                >
-                  <Download size={20} />
-                </button>
-              </div>
             </motion.div>
           </motion.div>
         )}
