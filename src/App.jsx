@@ -183,7 +183,7 @@ function App() {
       await setPersistence(auth, browserLocalPersistence);
       
       // Detect if running as a native app (Android/iOS)
-      const isNative = typeof window !== 'undefined' && (window.Capacitor?.isNativePlatform?.() || window.location.protocol === 'capacitor:');
+      const isNative = window.Capacitor && window.Capacitor.getPlatform() !== 'web';
       
       if (isNative) {
         setAuthStatus("Iniciando login...");
