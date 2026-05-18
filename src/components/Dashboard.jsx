@@ -6,9 +6,45 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CATEGORIES } from '../lib/stickers';
 import html2canvas from 'html2canvas';
 
-function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, settings, onUpdateCollection, setActiveTab, unlockedAchievements = [] }) {
+function Dashboard({ 
+  collection, 
+  lang = 'pt', 
+  packets = 0, 
+  onUpdatePackets, 
+  settings, 
+  onUpdateCollection, 
+  setActiveTab, 
+  unlockedAchievements = [], 
+  tradePartnerUid = null, 
+  tradePartnerData = null, 
+  onClearTrade = () => {}, 
+  user = null 
+}) {
   const stats = calculateStats(collection);
   const t = translations[lang];
+
+  // Matchmaking Computation
+  const partnerCollection = tradePartnerData?.collection || {};
+  const partnerName = tradePartnerData?.settings?.userName || t.partnerName || 'Parceiro';
+  
+  const gives = ALL_VALID_CODES.filter(code => {
+    const mySticker = collection[code];
+    const partnerSticker = partnerCollection[code];
+    return mySticker?.repeated > 0 && (!partnerSticker || partnerSticker.status === 'none');
+  });
+
+  const receives = ALL_VALID_CODES.filter(code => {
+    const partnerSticker = partnerCollection[code];
+    const mySticker = collection[code];
+    return partnerSticker?.repeated > 0 && (!mySticker || mySticker.status === 'none');
+  });
+
+  const getTradeMatchMessage = () => {
+    let msg = t.matchingTradeText || '';
+    return msg
+      .replace('{give}', gives.length.toString())
+      .replace('{receive}', receives.length.toString());
+  };
   const currentUnlocked = getAchievements(collection);
   const unlockedSet = new Set([...unlockedAchievements, ...currentUnlocked]);
   const [copied, setCopied] = useState(false);
@@ -20,6 +56,10 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
   // States for Modals
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isRepeatedOpen, setIsRepeatedOpen] = useState(false);
+  const [isTradeDetailsOpen, setIsTradeDetailsOpen] = useState(false);
+  const [copiedTradeSummary, setCopiedTradeSummary] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [copiedTradeLink, setCopiedTradeLink] = useState(false);
   const [pastedText, setPastedText] = useState('');
   const [analysis, setAnalysis] = useState(null);
 
@@ -71,7 +111,23 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
     return "Time escalado! Comece a colar suas figurinhas.";
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
+    setIsShareModalOpen(true);
+  };
+
+  const handleCopyTradeLink = async () => {
+    if (!user) return;
+    const tradeLink = `${window.location.origin}/?trade=${user.uid}`;
+    try {
+      await navigator.clipboard.writeText(tradeLink);
+      setCopiedTradeLink(true);
+      setTimeout(() => setCopiedTradeLink(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy trade link:", err);
+    }
+  };
+
+  const handleCopyTextList = async () => {
     const repetidas = ALL_VALID_CODES
       .filter(code => collection[code]?.repeated > 0)
       .map(code => {
@@ -203,8 +259,109 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
     }
   };
 
+  const handleCopyTradeSummary = async () => {
+    const givesList = gives.join(', ') || (lang === 'pt' ? 'Nenhuma' : lang === 'en' ? 'None' : 'Ninguna');
+    const receivesList = receives.join(', ') || (lang === 'pt' ? 'Nenhuma' : lang === 'en' ? 'None' : 'Ninguna');
+    const summaryText = lang === 'pt'
+      ? `🤝 Match Perfeito no FiguritaZ!\n\n🔹 Eu envio para ${partnerName}: ${givesList} (${gives.length} Fig.)\n🔸 ${partnerName} envia para mim: ${receivesList} (${receives.length} Fig.)\n\nGerado em figuritaz.web.app`
+      : lang === 'en'
+      ? `🤝 Perfect Swap on FiguritaZ!\n\n🔹 I give ${partnerName}: ${givesList} (${gives.length} stickers)\n🔸 ${partnerName} gives me: ${receivesList} (${receives.length} stickers)\n\nGenerated at figuritaz.web.app`
+      : `🤝 ¡Match de Intercambio en FiguritaZ!\n\n🔹 Le envío a ${partnerName}: ${givesList} (${gives.length} Fig.)\n🔸 ${partnerName} me envía: ${receivesList} (${receives.length} Fig.)\n\nGenerado en figuritaz.web.app`;
+
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopiedTradeSummary(true);
+      setTimeout(() => setCopiedTradeSummary(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy trade summary:", err);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Active Trade Partner Banners */}
+      {tradePartnerUid && (
+        <div className="glass-card p-5 border-l-4 border-l-secondary relative overflow-hidden group shadow-2xl animate-fade-in bg-gradient-to-r from-secondary/5 via-primary/5 to-transparent">
+          {/* Holographic grid overlay */}
+          <div className="absolute inset-0 opacity-5 pointer-events-none" 
+            style={{ 
+              backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+              backgroundSize: '20px 20px'
+            }} 
+          />
+          
+          <button 
+            onClick={onClearTrade}
+            className="absolute top-4 right-4 z-20 p-1 text-white/40 hover:text-white transition-colors bg-white/5 rounded-full hover:bg-white/10 active:scale-95"
+          >
+            <X size={16} />
+          </button>
+
+          {!user ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="bg-secondary/20 p-2.5 rounded-2xl border border-secondary/30">
+                  <UsersIcon className="text-secondary animate-pulse" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">{t.tradeInvitation}</h3>
+                  <p className="text-[11px] text-text-dim font-bold uppercase tracking-wide opacity-80">{t.loginToTrade}</p>
+                </div>
+              </div>
+              <p className="text-xs text-text-dim leading-relaxed">
+                {lang === 'pt' 
+                  ? 'Você foi convidado para uma troca automática! Clique no ícone de engrenagem no topo direito para fazer login com o Google e descobrir o Match Perfeito instantaneamente.' 
+                  : lang === 'en' 
+                  ? 'You were invited to an automatic trade! Click the settings gear icon at the top right to log in with Google and reveal the Perfect Match instantly.' 
+                  : '¡Fuiste invitado a un intercambio automático! Haz clic en el engranaje de configuración arriba a la derecha para iniciar sesión con Google y descubrir tu Match Perfecto.'}
+              </p>
+            </div>
+          ) : !tradePartnerData ? (
+            <div className="flex items-center gap-3 py-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-secondary"></div>
+              <span className="text-xs font-bold text-text-dim uppercase tracking-widest">Carregando Match de Trocas...</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="bg-primary/20 p-2.5 rounded-2xl border border-primary/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                  <Repeat className="text-primary animate-pulse" size={22} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider">
+                      {t.perfectMatch || 'Swap Match!'}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-black text-text-color uppercase tracking-wider mt-1 truncate">
+                    {partnerName}
+                  </h3>
+                  <p className="text-xs text-text-dim mt-0.5">
+                    {getTradeMatchMessage()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button 
+                  onClick={() => setIsTradeDetailsOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-white font-black text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-1.5"
+                >
+                  <ClipboardList size={12} />
+                  {t.viewTradeDetails}
+                </button>
+                <button 
+                  onClick={onClearTrade}
+                  className="bg-white/5 hover:bg-white/10 text-text-dim font-bold text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all active:scale-95"
+                >
+                  {lang === 'pt' ? 'Ignorar' : lang === 'en' ? 'Dismiss' : 'Ignorar'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tactical Stats Header */}
       <div className="glass-card p-6 border-l-4 border-l-primary">
         <div className="flex justify-between items-start mb-4">
@@ -822,6 +979,236 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                 <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-white/10 to-transparent rounded-tl-full" />
               </div>
 
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Trade Match Details Modal */}
+      <AnimatePresence>
+        {isTradeDetailsOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/85 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-lg p-6 space-y-6 max-h-[85vh] flex flex-col border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] scrollbar-hide animate-fade-in"
+              style={{ backgroundColor: 'var(--board-bg)' }}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Repeat size={20} className="text-primary" />
+                  <h2 className="text-xl font-black text-text-color uppercase tracking-tight">
+                    {t.perfectMatch || 'Swap Match!'}
+                  </h2>
+                </div>
+                <button 
+                  onClick={() => setIsTradeDetailsOpen(false)} 
+                  className="p-1 hover:bg-white/10 rounded-full text-text-color transition-colors active:scale-90"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Partner Header */}
+              <div className="bg-black/25 px-4 py-3 rounded-2xl border border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <UsersIcon size={16} className="text-secondary" />
+                  <span className="text-[10px] text-text-dim font-black uppercase tracking-wider">{t.partnerName || 'Parceiro'}</span>
+                </div>
+                <span className="text-xs font-black text-text-color">{partnerName}</span>
+              </div>
+
+              {/* Gives & Receives Columns */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-6 scrollbar-hide">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Left Column: Gives */}
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3 flex flex-col">
+                    <h3 className="text-xs font-black text-primary uppercase tracking-widest flex items-center gap-1.5 border-b border-white/5 pb-2">
+                      <Check size={14} />
+                      {t.youGive}
+                    </h3>
+                    {gives.length === 0 ? (
+                      <p className="text-[11px] text-text-dim italic py-4">{t.cantGive}</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
+                        {gives.map(code => (
+                          <span key={code} className="bg-primary/20 text-primary border border-primary/20 px-2 py-0.75 rounded-md text-[10px] font-black animate-scale-in">
+                            {code}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: Receives */}
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3 flex flex-col">
+                    <h3 className="text-xs font-black text-secondary uppercase tracking-widest flex items-center gap-1.5 border-b border-white/5 pb-2">
+                      <Download size={14} />
+                      {t.youReceive}
+                    </h3>
+                    {receives.length === 0 ? (
+                      <p className="text-[11px] text-text-dim italic py-4">{t.noTradeMatches}</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
+                        {receives.map(code => (
+                          <span key={code} className="bg-secondary/20 text-secondary border border-secondary/20 px-2 py-0.75 rounded-md text-[10px] font-black animate-scale-in">
+                            {code}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2 pt-2">
+                <button 
+                  onClick={handleCopyTradeSummary}
+                  className="w-full bg-primary hover:bg-primary/90 py-3 rounded-xl font-black text-[11px] text-white uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {copiedTradeSummary ? (
+                    <>
+                      <Check size={14} />
+                      {t.copySuccess || 'Copiado!'}
+                    </>
+                  ) : (
+                    <>
+                      <Share2 size={14} />
+                      {lang === 'pt' ? 'Copiar Resumo da Troca 📱' : lang === 'en' ? 'Copy Swap Summary' : 'Copiar Resumen'}
+                    </>
+                  )}
+                </button>
+                <button 
+                  onClick={() => setIsTradeDetailsOpen(false)}
+                  className="w-full bg-white/5 hover:bg-white/10 py-3 rounded-xl font-black text-[11px] text-text-color uppercase tracking-widest transition-all active:scale-[0.98]"
+                >
+                  {t.close}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Share Duplicates and Cloud Trade Modal */}
+      <AnimatePresence>
+        {isShareModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/85 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-sm p-6 space-y-6 max-h-[90vh] flex flex-col border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-y-auto scrollbar-hide animate-fade-in"
+              style={{ backgroundColor: 'var(--board-bg)' }}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Share2 size={20} className="text-primary" />
+                  <h2 className="text-xl font-black text-text-color uppercase tracking-tight">
+                    {lang === 'pt' ? 'Compartilhar' : lang === 'en' ? 'Share' : 'Compartir'}
+                  </h2>
+                </div>
+                <button 
+                  onClick={() => setIsShareModalOpen(false)} 
+                  className="p-1 hover:bg-white/10 rounded-full text-text-color transition-colors active:scale-90"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Cloud Trading Section */}
+              <div className="space-y-4">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3 flex flex-col items-center text-center">
+                  <div className="bg-secondary/20 p-2.5 rounded-full border border-secondary/30">
+                    <Repeat className="text-secondary" size={20} />
+                  </div>
+                  <h3 className="text-xs font-black text-white uppercase tracking-widest leading-none">
+                    {lang === 'pt' ? 'Troca Automática em Nuvem 🤝' : lang === 'en' ? 'Cloud Swap Link' : 'Enlace en la Nube'}
+                  </h3>
+                  
+                  {!user ? (
+                    <p className="text-[10px] text-text-dim leading-relaxed">
+                      {lang === 'pt' 
+                        ? 'Faça login com o Google para habilitar seu QR Code e Link de Troca em tempo real!' 
+                        : lang === 'en' 
+                        ? 'Sign in with Google to enable your custom QR Code and real-time Trade Link!' 
+                        : '¡Inicia sesión con Google para activar tu QR Code y Enlace en tiempo real!'}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-[10px] text-text-dim leading-relaxed max-w-[240px]">
+                        {lang === 'pt' 
+                          ? 'Seu amigo verá quais figurinhas vocês podem trocar de forma instantânea!' 
+                          : lang === 'en' 
+                          ? 'Your friend will instantly see which stickers you can swap!' 
+                          : '¡Tu amigo verá al instante qué figuritas pueden intercambiar!'}
+                      </p>
+
+                      {/* QR Code Container */}
+                      <div className="relative p-3 bg-white rounded-2xl shadow-[0_0_20px_rgba(6,182,212,0.15)] border-2 border-primary/20 scale-95 transition-transform hover:scale-100 duration-300">
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${window.location.origin}/?trade=${user.uid}`)}`} 
+                          alt="Trade QR Code" 
+                          className="w-[150px] h-[150px]"
+                        />
+                      </div>
+
+                      {/* Copy Link Button */}
+                      <button 
+                        onClick={handleCopyTradeLink}
+                        className="w-full bg-secondary hover:bg-secondary/90 text-white font-black text-[10px] uppercase tracking-widest py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        {copiedTradeLink ? (
+                          <>
+                            <Check size={12} />
+                            {t.tradeLinkCopied}
+                          </>
+                        ) : (
+                          <>
+                            <ExternalLink size={12} />
+                            {t.shareTradeLink}
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Plain Text Section */}
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex flex-col gap-2.5">
+                  <h4 className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                    {lang === 'pt' ? 'Outras Opções' : lang === 'en' ? 'Other Options' : 'Otras Opciones'}
+                  </h4>
+                  <button 
+                    onClick={async () => {
+                      await handleCopyTextList();
+                      setIsShareModalOpen(false);
+                    }}
+                    className="w-full bg-white/5 hover:bg-white/10 text-text-color font-black text-[10px] uppercase tracking-widest py-3 rounded-xl transition-all border border-white/5 active:scale-[0.98] flex items-center justify-center gap-1.5"
+                  >
+                    <ClipboardList size={12} className="text-primary" />
+                    {lang === 'pt' ? 'Copiar Lista de Repetidas (Texto)' : lang === 'en' ? 'Copy Duplicates List (Text)' : 'Copy Duplicates List'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button 
+                onClick={() => setIsShareModalOpen(false)}
+                className="w-full bg-white/5 hover:bg-white/10 py-3.5 rounded-xl font-black text-[11px] text-text-dim uppercase tracking-widest transition-all active:scale-[0.98]"
+              >
+                {t.close}
+              </button>
             </motion.div>
           </motion.div>
         )}

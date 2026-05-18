@@ -74,7 +74,17 @@ export const translations = {
     importDescription: "Cole aqui a lista de figurinhas que faltam para marcar automaticamente as que você já tem.",
     importButton: "Processar e Importar",
     importSuccess: "Coleção importada com sucesso!",
-    importConfirm: "Isso irá substituir sua coleção atual. Deseja continuar?"
+    importConfirm: "Isso irá substituir sua coleção atual. Deseja continuar?",
+    shareTradeLink: "Link de Troca 🤝",
+    tradeLinkCopied: "Link de Troca copiado!",
+    perfectMatch: "Match de Trocas! 🤝",
+    matchingTradeText: "Você pode dar {give} e receber {receive} de volta!",
+    viewTradeDetails: "Ver Detalhes do Match",
+    youGive: "Você envia para ele:",
+    youReceive: "Ele envia para você:",
+    loginToTrade: "Faça login para comparar repetidas!",
+    tradeInvitation: "Convite de Troca Ativo",
+    partnerName: "Parceiro de Troca"
   },
   en: {
     dashboard: "Dashboard",
@@ -151,7 +161,17 @@ export const translations = {
     importDescription: "Paste here the list of missing stickers to automatically mark those you already have.",
     importButton: "Process and Import",
     importSuccess: "Collection imported successfully!",
-    importConfirm: "This will replace your current collection. Do you want to continue?"
+    importConfirm: "This will replace your current collection. Do you want to continue?",
+    shareTradeLink: "Trade Link 🤝",
+    tradeLinkCopied: "Trade Link copied!",
+    perfectMatch: "Swap Match! 🤝",
+    matchingTradeText: "You can give {give} and receive {receive} in return!",
+    viewTradeDetails: "View Match Details",
+    youGive: "You give them:",
+    youReceive: "They give you:",
+    loginToTrade: "Log in to compare duplicate stickers!",
+    tradeInvitation: "Active Trade Invitation",
+    partnerName: "Trade Partner"
   },
   es: {
     dashboard: "Dashboard",
@@ -228,6 +248,17 @@ export const translations = {
     importDescription: "Pega aquí la lista de las figuritaZ que te faltan para marcar automáticamente las que ya tienes.",
     importButton: "Procesar e Importar",
     importSuccess: "¡Colección importada con éxito!",
-    importConfirm: "¿Esto reemplazará tu colección actual. ¿Deseas continuar?"
+    importConfirm: "¿Esto reemplazará tu colección actual. ¿Deseas continuar?",
+    shareTradeLink: "Enlace de Intercambio 🤝",
+    tradeLinkCopied: "¡Enlace copiado!",
+    perfectMatch: "¡Match de Intercambio! 🤝",
+    matchingTradeText: "¡Puedes dar {give} y recibir {receive} a cambio!",
+    viewTradeDetails: "Ver Detalles del Match",
+    youGive: "Tú le envías:",
+    youReceive: "Él te envía:",
+    loginToTrade: "¡Inicia sesión para comparar repetidas!",
+    tradeInvitation: "Invitación de Intercambio Activa",
+    partnerName: "Compañero de Intercambio"
+  
   }
 };

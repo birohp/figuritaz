@@ -2,8 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      // Permite leitura e escrita apenas se o usuário estiver logado e for o dono dos dados
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Permite leitura por qualquer usuário autenticado e escrita apenas pelo dono dos dados
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

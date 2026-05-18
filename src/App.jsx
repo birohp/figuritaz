@@ -45,6 +45,10 @@ function App() {
     return local ? JSON.parse(local) : [];
   });
 
+  const [tradePartnerUid, setTradePartnerUid] = useState(null);
+  const [tradePartnerData, setTradePartnerData] = useState(null);
+  const [isTradeLoading, setIsTradeLoading] = useState(false);
+
   const t = translations[settings.lang];
 
   // Apply Theme Variables
@@ -111,6 +115,46 @@ function App() {
 
     localStorage.setItem('app_settings', JSON.stringify(settings));
   }, [settings]);
+
+  // Parse trade partner parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tradeUid = params.get('trade');
+    if (tradeUid) {
+      setTradePartnerUid(tradeUid);
+    }
+  }, []);
+
+  // Fetch trade partner collection in real-time once logged in
+  useEffect(() => {
+    if (!tradePartnerUid) {
+      setTradePartnerData(null);
+      return;
+    }
+    
+    if (!user) {
+      setTradePartnerData(null);
+      return;
+    }
+
+    setIsTradeLoading(true);
+    const partnerRef = doc(db, 'users', tradePartnerUid);
+    
+    const unsubscribe = onSnapshot(partnerRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setTradePartnerData(docSnap.data());
+      } else {
+        console.warn("Trade partner not found in Firestore.");
+        setTradePartnerData(null);
+      }
+      setIsTradeLoading(false);
+    }, (error) => {
+      console.error("Error reading trade partner data:", error);
+      setIsTradeLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [tradePartnerUid, user]);
 
   // Sync with LocalStorage
   useEffect(() => {
@@ -376,6 +420,14 @@ function App() {
                 onUpdateCollection={updateCollection}
                 setActiveTab={setActiveTab}
                 unlockedAchievements={unlockedAchievements}
+                tradePartnerUid={tradePartnerUid}
+                tradePartnerData={tradePartnerData}
+                onClearTrade={() => {
+                  setTradePartnerUid(null);
+                  setTradePartnerData(null);
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                }}
+                user={user}
               />
             )}
             {activeTab === 'collection' && (
