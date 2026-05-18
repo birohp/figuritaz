@@ -50,15 +50,64 @@ function App() {
   // Apply Theme Variables
   useEffect(() => {
     const root = document.documentElement;
-    const isLight = settings.boardColor === '#f8fafc';
     
-    root.style.setProperty('--board-bg', settings.boardColor);
-    root.style.setProperty('--text-main', isLight ? '#0f172a' : '#f8fafc');
-    root.style.setProperty('--text-muted', isLight ? '#475569' : '#94a3b8');
-    root.style.setProperty('--surface-bg', isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.05)');
-    root.style.setProperty('--surface-border', isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)');
-    root.style.setProperty('--grid-color', isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)');
-    root.style.setProperty('--marking-color', isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.03)');
+    // Default Flat Themes
+    let primary = '#10b981';
+    let secondary = '#3b82f6';
+    let accent = '#f43f5e';
+    let boardBg = settings.boardColor;
+    let boardBgGradient = 'none';
+    let isLight = settings.boardColor === '#f8fafc';
+    let textMain = isLight ? '#0f172a' : '#f8fafc';
+    let textMuted = isLight ? '#475569' : '#94a3b8';
+    let surfaceBg = isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.05)';
+    let surfaceBorder = isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+    let gridColor = isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)';
+    let markingColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.03)';
+    let modalBg = isLight ? '#ffffff' : 'rgba(31, 41, 55, 0.95)';
+
+    // Premium Themes
+    if (settings.boardColor === 'cyber_stadium') {
+      primary = '#06b6d4'; // Cyan
+      secondary = '#ec4899'; // Magenta
+      accent = '#a855f7'; // Purple
+      boardBg = '#090b0e'; // Lead dark base
+      boardBgGradient = 'radial-gradient(circle at top, #141822 0%, #090b0e 100%)';
+      textMain = '#ecfeff'; // Cyan-tinted bright white
+      textMuted = 'rgba(6, 182, 212, 0.6)'; // Neon cyan glow text
+      surfaceBg = 'rgba(15, 23, 42, 0.6)'; // Glassy dark-cyan slate
+      surfaceBorder = 'rgba(6, 182, 212, 0.2)'; // Glowing cyan border
+      gridColor = 'rgba(236, 72, 153, 0.07)'; // Glowing magenta grid
+      markingColor = 'rgba(6, 182, 212, 0.05)'; // Glowing cyan pitch lines
+      modalBg = 'rgba(15, 23, 42, 0.95)';
+    } else if (settings.boardColor === 'golden_trophy') {
+      primary = '#fbbf24'; // Shimmering Gold
+      secondary = '#d97706'; // Bronze/Amber
+      accent = '#ca8a04'; // Warm deep gold
+      boardBg = '#060607'; // Obsidian base
+      boardBgGradient = 'radial-gradient(circle at top, #1c1812 0%, #060607 100%)';
+      textMain = '#fffdfa'; // Golden warm white
+      textMuted = 'rgba(251, 191, 36, 0.5)'; // Subdued amber text
+      surfaceBg = 'rgba(12, 10, 9, 0.7)'; // Matte obsidian glass
+      surfaceBorder = 'rgba(251, 191, 36, 0.25)'; // Glowing gold border
+      gridColor = 'rgba(217, 119, 6, 0.04)'; // Warm bronze grid
+      markingColor = 'rgba(251, 191, 36, 0.03)'; // Gold pitch lines
+      modalBg = 'rgba(12, 10, 9, 0.95)';
+    }
+
+    // Set properties
+    root.style.setProperty('--primary-color', primary);
+    root.style.setProperty('--secondary-color', secondary);
+    root.style.setProperty('--accent-color', accent);
+    root.style.setProperty('--board-bg', boardBg);
+    root.style.setProperty('--board-bg-gradient', boardBgGradient);
+    root.style.setProperty('--text-main', textMain);
+    root.style.setProperty('--text-muted', textMuted);
+    root.style.setProperty('--surface-bg', surfaceBg);
+    root.style.setProperty('--surface-border', surfaceBorder);
+    root.style.setProperty('--grid-color', gridColor);
+    root.style.setProperty('--marking-color', markingColor);
+    root.style.setProperty('--modal-bg', modalBg);
 
     localStorage.setItem('app_settings', JSON.stringify(settings));
   }, [settings]);
@@ -402,7 +451,7 @@ function App() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               className="glass-card w-full max-w-sm p-6 space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.3)] max-h-[90vh] overflow-y-auto scrollbar-hide"
-              style={{ backgroundColor: settings.boardColor === '#f8fafc' ? '#ffffff' : 'rgba(31, 41, 55, 0.95)' }}
+              style={{ backgroundColor: 'var(--modal-bg)' }}
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-text-color">
@@ -490,21 +539,25 @@ function App() {
                   <Palette size={14} />
                   {t.boardColor}
                 </label>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-6 gap-2">
                   {[
-                    { color: '#064e3b', name: t.green },
-                    { color: '#111827', name: t.black },
-                    { color: '#1e3a8a', name: t.blue },
-                    { color: '#374151', name: t.gray },
-                    { color: '#f8fafc', name: t.white }
+                    { color: '#064e3b', name: t.green, bg: '#064e3b' },
+                    { color: '#111827', name: t.black, bg: '#111827' },
+                    { color: '#1e3a8a', name: t.blue, bg: '#1e3a8a' },
+                    { color: '#f8fafc', name: t.white, bg: '#f8fafc' },
+                    { color: 'cyber_stadium', name: t.cyber, bg: 'linear-gradient(135deg, #141822 30%, #06b6d4 100%)' },
+                    { color: 'golden_trophy', name: t.gold, bg: 'linear-gradient(135deg, #1c1812 30%, #fbbf24 100%)' }
                   ].map(c => (
                     <button
                       key={c.color}
                       onClick={() => updateSettings({ ...settings, boardColor: c.color })}
                       className={`aspect-square rounded-full border-2 transition-all ${
-                        settings.boardColor === c.color ? 'border-primary scale-110 shadow-lg' : 'border-black/10 opacity-60'
+                        settings.boardColor === c.color ? 'border-primary scale-110 shadow-lg' : 'border-black/10 opacity-60 hover:opacity-90'
                       }`}
-                      style={{ backgroundColor: c.color }}
+                      style={{ 
+                        background: c.bg,
+                        backgroundSize: 'cover'
+                      }}
                       title={c.name}
                     />
                   ))}

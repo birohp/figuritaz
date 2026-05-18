@@ -66,6 +66,14 @@
           }
         },
         {
+          "client_id": "443854062825-49a78frplgsnj30i9bflkk61hi6vi5tf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.figuritaz.app",
+            "certificate_hash": "a6b8df1067d091a7ee4c89a20dd5506aa8621c92"
+          }
+        },
+        {
           "client_id": "443854062825-uh7pgd2b9udrll7kl0stm41sat6682dj.apps.googleusercontent.com",
           "client_type": 3
         }
