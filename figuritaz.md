@@ -26,13 +26,7 @@ Criar um aplicativo Android nativo para gerenciar o álbum de figurinhas da Copa
     *   Resumo do álbum: Porcentagem de conclusão, total de figurinhas coladas, total de repetidas e total faltante.
     *   Lista de seleções/categorias para navegação manual.
 
-3.  **Scanner de Páginas (CameraX + ML Kit):**
-    *   Interface de câmera com overlay guiando o usuário a enquadrar uma página do álbum.
-    *   Botão de captura.
-    *   **Lógica de Processamento:** Ao capturar, usar o ML Kit Text Recognition para ler os números visíveis na página. (Dica de regra de negócio: se o número da figurinha na página for lido pelo OCR, significa que ela está *faltando*, pois a figurinha colada cobre o número original da página).
-    *   Tela de confirmação: Mostrar os números detectados para o usuário confirmar antes de salvar no banco de dados.
-
-4.  **Gerenciamento Manual:**
+3.  **Gerenciamento Manual:**
     *   Interface para o usuário marcar manualmente figurinhas obtidas ou repetidas (caso a câmera falhe ou para trocas avulsas).
     *   Opção de gerar um relatório/texto das repetidas para compartilhar no WhatsApp.
 

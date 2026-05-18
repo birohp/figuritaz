@@ -258,15 +258,18 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
 
       {/* Group View */}
       {!selectedGroup && !searchTerm && (
-        <div className={`grid ${colsCount === 1 ? 'grid-cols-1' : 'grid-cols-2'} md:grid-cols-3 lg:grid-cols-4 gap-4 pb-10`}>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-10">
           {groups.map(group => {
             const teams = CATEGORIES.filter(c => c.group === group);
             const isSpecial = group === 'FIFA World Cup' || group === 'Coca-Cola';
+            const colSpanClass = colsCount === 1
+              ? (isSpecial ? 'col-span-1' : 'col-span-2 md:col-span-1')
+              : 'col-span-1';
             return (
               <button
                 key={group}
                 onClick={() => handleGroupSelect(group)}
-                className="glass-card p-4 text-left hover:border-primary transition-all group active:scale-95"
+                className={`glass-card p-4 text-left hover:border-primary transition-all group active:scale-95 ${colSpanClass}`}
               >
                 <h3 className="text-[10px] font-black uppercase tracking-tighter mb-3 text-text-dim group-hover:text-primary">{group}</h3>
                 <div className={`grid ${
