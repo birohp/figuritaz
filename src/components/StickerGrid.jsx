@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CATEGORIES, ALL_VALID_CODES, SHINY_CODES } from '../lib/stickers';
-import { Plus, Minus, Check, Search, ChevronLeft, Trophy, Beer, Star, Users } from 'lucide-react';
+import { Plus, Minus, Check, Search, ChevronLeft, Trophy, Beer, Star, Users, LayoutGrid, List } from 'lucide-react';
 import { translations } from '../lib/translations';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,6 +41,10 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [colsCount, setColsCount] = useState(() => {
+    const saved = localStorage.getItem('album_cols_count');
+    return saved ? Number(saved) : 2;
+  });
   const t = translations[lang];
 
   const toggleSticker = (number) => {
@@ -192,11 +196,11 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
       </AnimatePresence>
 
       {/* Header / Search */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         {selectedGroup && !searchTerm && (
           <button
             onClick={() => { setSelectedGroup(null); setSelectedCategory(null); }}
-            className="p-3 bg-surface-color border border-surface-border rounded-xl text-text-dim hover:text-white transition-all"
+            className="p-3 bg-surface-color border border-surface-border rounded-xl text-text-dim hover:text-white transition-all active:scale-95 shrink-0"
           >
             <ChevronLeft size={20} />
           </button>
@@ -211,6 +215,23 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        
+        {/* Column Layout Toggle */}
+        <button
+          onClick={() => {
+            const nextCols = colsCount === 1 ? 2 : 1;
+            setColsCount(nextCols);
+            localStorage.setItem('album_cols_count', nextCols);
+          }}
+          className="p-3 bg-surface-color border border-surface-border rounded-xl text-text-dim hover:text-white transition-all active:scale-95 shrink-0 flex items-center justify-center"
+          title={colsCount === 1 ? 'Mudar para 2 colunas' : 'Mudar para 1 coluna'}
+        >
+          {colsCount === 1 ? (
+            <LayoutGrid size={20} className="text-primary animate-scale-in" />
+          ) : (
+            <List size={20} className="text-primary animate-scale-in" />
+          )}
+        </button>
       </div>
 
       {/* Quick Filters */}
@@ -237,7 +258,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
 
       {/* Group View */}
       {!selectedGroup && !searchTerm && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-10">
+        <div className={`grid ${colsCount === 1 ? 'grid-cols-1' : 'grid-cols-2'} md:grid-cols-3 lg:grid-cols-4 gap-4 pb-10`}>
           {groups.map(group => {
             const teams = CATEGORIES.filter(c => c.group === group);
             const isSpecial = group === 'FIFA World Cup' || group === 'Coca-Cola';
@@ -305,7 +326,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
             </div>
           )}
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4 pb-10">
+          <div className={`grid ${colsCount === 1 ? 'grid-cols-2' : 'grid-cols-3'} sm:grid-cols-4 lg:grid-cols-5 gap-4 pb-10`}>
             {filteredStickers.map(code => {
               const data = collection[code] || { status: 'none', repeated: 0 };
               const isShiny = SHINY_CODES.includes(code);
