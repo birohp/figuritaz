@@ -84,7 +84,15 @@ export const translations = {
     youReceive: "Ele envia para você:",
     loginToTrade: "Faça login para comparar repetidas!",
     tradeInvitation: "Convite de Troca Ativo",
-    partnerName: "Parceiro de Troca"
+    partnerName: "Parceiro de Troca",
+    opened: "abertos",
+    toBuyEst: "A comprar (est.)",
+    packetsDim: "pacotinhos",
+    packetsNormal: "pacotes",
+    finalProjection: "Projeção Final",
+    spent: "gastos",
+    toInvestEst: "A investir (est.)",
+    finalTotalCost: "Custo Total Final"
   },
   en: {
     dashboard: "Dashboard",
@@ -171,7 +179,15 @@ export const translations = {
     youReceive: "They give you:",
     loginToTrade: "Log in to compare duplicate stickers!",
     tradeInvitation: "Active Trade Invitation",
-    partnerName: "Trade Partner"
+    partnerName: "Trade Partner",
+    opened: "opened",
+    toBuyEst: "To buy (est.)",
+    packetsDim: "packets",
+    packetsNormal: "packets",
+    finalProjection: "Final Projection",
+    spent: "spent",
+    toInvestEst: "To invest (est.)",
+    finalTotalCost: "Final Total Cost"
   },
   es: {
     dashboard: "Dashboard",
@@ -258,7 +274,14 @@ export const translations = {
     youReceive: "Él te envía:",
     loginToTrade: "¡Inicia sesión para comparar repetidas!",
     tradeInvitation: "Invitación de Intercambio Activa",
-    partnerName: "Compañero de Intercambio"
-  
+    partnerName: "Compañero de Intercambio",
+    opened: "abiertos",
+    toBuyEst: "A comprar (est.)",
+    packetsDim: "sobres",
+    packetsNormal: "sobres",
+    finalProjection: "Proyección Final",
+    spent: "gastos",
+    toInvestEst: "A invertir (est.)",
+    finalTotalCost: "Costo Total Final"
   }
 };

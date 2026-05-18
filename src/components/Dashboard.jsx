@@ -477,7 +477,7 @@ function Dashboard({
               <p className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1">{t.packets}</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-black text-text-color">{packets}</span>
-                <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter opacity-60">abertos</span>
+                <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter opacity-60">{t.opened}</span>
               </div>
             </div>
             
@@ -499,12 +499,12 @@ function Dashboard({
 
           <div className="space-y-1.5 pt-3 border-t border-white/5">
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">A comprar (est.)</span>
-              <span className="text-[11px] font-black text-secondary">+{estimate.remaining} pacotinhos</span>
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.toBuyEst}</span>
+              <span className="text-[11px] font-black text-secondary">+{estimate.remaining} {t.packetsDim}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">Projeção Final</span>
-              <span className="text-[11px] font-black text-text-color">{packets + estimate.remaining} pacotes</span>
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.finalProjection}</span>
+              <span className="text-[11px] font-black text-text-color">{packets + estimate.remaining} {t.packetsNormal}</span>
             </div>
           </div>
         </div>
@@ -519,17 +519,17 @@ function Dashboard({
             <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{t.totalInvested}</p>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-text-color">{currencySymbol} {totalInvested}</span>
-              <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter opacity-60">gastos</span>
+              <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter opacity-60">{t.spent}</span>
             </div>
           </div>
 
           <div className="space-y-1.5 pt-3 border-t border-white/5">
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">A investir (est.)</span>
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.toInvestEst}</span>
               <span className="text-[11px] font-black text-primary">+{currencySymbol} {remainingCost.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">Custo Total Final</span>
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.finalTotalCost}</span>
               <span className="text-[11px] font-black text-text-color">{currencySymbol} {(packets * (settings?.packetPrice || 4.00) + remainingCost).toFixed(2)}</span>
             </div>
           </div>
