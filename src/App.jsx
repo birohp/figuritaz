@@ -3,7 +3,7 @@ import { auth, googleProvider, db } from './lib/firebase';
 import { GoogleAuthProvider, signInWithCredential, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3, Award, Heart, Coffee, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3, Award, Heart, Coffee, ExternalLink, ClipboardList } from 'lucide-react';
 import AdBanner from './components/AdBanner';
 import Dashboard from './components/Dashboard';
 import StickerGrid from './components/StickerGrid';
@@ -11,6 +11,7 @@ import Stats from './components/Stats';
 import Achievements from './components/Achievements';
 import AchievementShare from './components/AchievementShare';
 import { translations } from './lib/translations';
+import { getAchievements } from './lib/stickers';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,6 +23,7 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [authStatus, setAuthStatus] = useState("Iniciando...");
+  const [pastedText, setPastedText] = useState("");
   
   const [settings, setSettings] = useState(() => {
     const local = localStorage.getItem('app_settings');
@@ -36,6 +38,11 @@ function App() {
   const [packets, setPackets] = useState(() => {
     const local = localStorage.getItem('packets_count');
     return local ? parseInt(local) : 0;
+  });
+
+  const [unlockedAchievements, setUnlockedAchievements] = useState(() => {
+    const local = localStorage.getItem('unlocked_achievements');
+    return local ? JSON.parse(local) : [];
   });
 
   const t = translations[settings.lang];
@@ -64,6 +71,37 @@ function App() {
   useEffect(() => {
     localStorage.setItem('packets_count', packets.toString());
   }, [packets]);
+
+  // Calculate and persist achievements permanently once unlocked
+  useEffect(() => {
+    const active = getAchievements(collection);
+    
+    setUnlockedAchievements(prev => {
+      const currentSet = new Set(prev);
+      let hasNew = false;
+      
+      active.forEach(id => {
+        if (!currentSet.has(id)) {
+          currentSet.add(id);
+          hasNew = true;
+        }
+      });
+      
+      if (hasNew) {
+        const updatedList = Array.from(currentSet);
+        localStorage.setItem('unlocked_achievements', JSON.stringify(updatedList));
+        
+        if (user) {
+          const userRef = doc(db, 'users', user.uid);
+          updateDoc(userRef, { unlockedAchievements: updatedList }).catch(() => {
+            setDoc(userRef, { unlockedAchievements: updatedList }, { merge: true });
+          });
+        }
+        return updatedList;
+      }
+      return prev;
+    });
+  }, [collection, user]);
 
   // Auth Listener
   useEffect(() => {
@@ -125,6 +163,13 @@ function App() {
           setCollection(data.collection);
           if (data.settings) setSettings(data.settings);
           if (data.packets !== undefined) setPackets(data.packets);
+          if (data.unlockedAchievements) {
+            setUnlockedAchievements(prev => {
+              const merged = Array.from(new Set([...prev, ...data.unlockedAchievements]));
+              localStorage.setItem('unlocked_achievements', JSON.stringify(merged));
+              return merged;
+            });
+          }
           initialLoad = false;
         }
       } else if (initialLoad) {
@@ -133,6 +178,7 @@ function App() {
           collection,
           settings,
           packets,
+          unlockedAchievements,
           updatedAt: new Date().toISOString()
         });
         initialLoad = false;
@@ -280,6 +326,7 @@ function App() {
                 settings={settings}
                 onUpdateCollection={updateCollection}
                 setActiveTab={setActiveTab}
+                unlockedAchievements={unlockedAchievements}
               />
             )}
             {activeTab === 'collection' && (
@@ -301,6 +348,7 @@ function App() {
               <Achievements 
                 collection={collection} 
                 lang={settings.lang}
+                unlockedAchievements={unlockedAchievements}
               />
             )}
           </motion.div>
@@ -509,6 +557,62 @@ function App() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Import Collection */}
+              <div className="pt-6 border-t border-white/10 space-y-4">
+                <label className="text-xs font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
+                  <ClipboardList size={14} />
+                  {t.importTitle}
+                </label>
+                <p className="text-[10px] font-medium text-text-dim leading-relaxed">
+                  {t.importDescription}
+                </p>
+                <textarea 
+                  className="w-full h-32 bg-black/10 border border-white/10 rounded-xl p-3 text-[10px] font-mono text-text-color focus:outline-none focus:border-primary transition-all resize-none"
+                  placeholder="Exemplo:&#10;MEX 🇲🇽: 1, 2, 3&#10;BRA 🇧🇷: 5, 8"
+                  value={pastedText || ''}
+                  onChange={(e) => setPastedText(e.target.value)}
+                />
+                <button 
+                  onClick={() => {
+                    if (!pastedText) return;
+                    if (!confirm(t.importConfirm)) return;
+                    
+                    const newCollection = {};
+                    import('./lib/stickers').then(({ ALL_VALID_CODES }) => {
+                      ALL_VALID_CODES.forEach(code => {
+                        newCollection[code] = { status: 'collected', repeated: 0 };
+                      });
+
+                      const lines = pastedText.split('\n');
+                      lines.forEach(line => {
+                        const match = line.match(/^([A-Z]+)\s*.*:\s*([\d,\s]+)/i);
+                        if (match) {
+                          const prefix = match[1].toUpperCase();
+                          const numbers = match[2].split(',').map(n => n.trim());
+                          
+                          numbers.forEach(num => {
+                            if (!num) return;
+                            const code = `${prefix}${num}`;
+                            if (num === '00') {
+                               newCollection['00'] = { status: 'none', repeated: 0 };
+                            } else if (newCollection[code]) {
+                               newCollection[code] = { status: 'none', repeated: 0 };
+                            }
+                          });
+                        }
+                      });
+
+                      updateCollection(newCollection);
+                      setPastedText('');
+                      alert(t.importSuccess);
+                    });
+                  }}
+                  className="w-full py-2 bg-white/10 text-text-color border border-white/20 rounded-lg text-xs font-black uppercase tracking-widest active:scale-95 transition-all hover:bg-white/20"
+                >
+                  {t.importButton}
+                </button>
               </div>
 
               {/* Support Project */}

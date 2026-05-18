@@ -3,6 +3,7 @@ import { CATEGORIES, ALL_VALID_CODES, SHINY_CODES } from '../lib/stickers';
 import { Plus, Minus, Check, Search, ChevronLeft, Trophy, Beer, Star, Users } from 'lucide-react';
 import { translations } from '../lib/translations';
 import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Sub-component for Flags/Logos to handle errors gracefully
 const TeamIcon = ({ team, isSpecial }) => {
@@ -111,8 +112,85 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
     if (firstInGroup) setSelectedCategory(firstInGroup.id);
   };
 
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return !localStorage.getItem('has_seen_onboarding');
+  });
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false);
+    if (dontShowAgain) {
+      localStorage.setItem('has_seen_onboarding', 'true');
+    }
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Onboarding Modal */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-sm p-8 text-center space-y-6 border-2 border-primary/30 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/20 blur-[60px] rounded-full pointer-events-none" />
+              
+              <div className="w-20 h-20 bg-primary rounded-full mx-auto flex items-center justify-center text-white shadow-lg shadow-primary/30 animate-bounce">
+                <Check size={40} strokeWidth={4} />
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-text-color uppercase tracking-tight">Instrução Tática</h2>
+                <p className="text-xs text-text-dim leading-relaxed">
+                  Para organizar sua campanha e conquistar o título, siga estas manobras:
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 text-left">
+                <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                  <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-black shrink-0">1</div>
+                  <p className="text-[10px] font-medium text-text-color">
+                    Toque no <b>número da figurinha</b> para colá-la no seu álbum.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                  <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-[10px] font-black shrink-0">2</div>
+                  <p className="text-[10px] font-medium text-text-color">
+                    Use o <b>+ e -</b> na base da figurinha para gerenciar suas <b>repetidas</b>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 py-2">
+                <button 
+                  onClick={() => setDontShowAgain(!dontShowAgain)}
+                  className="flex items-center gap-2 group cursor-pointer"
+                >
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${dontShowAgain ? 'bg-primary border-primary' : 'border-white/20 hover:border-white/40'}`}>
+                    {dontShowAgain && <Check size={14} strokeWidth={4} className="text-white" />}
+                  </div>
+                  <span className="text-[10px] font-bold text-text-dim group-hover:text-text-color transition-colors">Não mostrar novamente</span>
+                </button>
+              </div>
+
+              <button 
+                onClick={handleCloseOnboarding}
+                className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-sm active:scale-95 transition-all shadow-xl shadow-primary/20 hover:brightness-110"
+              >
+                Entendido, Professor!
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header / Search */}
       <div className="flex gap-2">
         {selectedGroup && !searchTerm && (
@@ -231,12 +309,20 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
             {filteredStickers.map(code => {
               const data = collection[code] || { status: 'none', repeated: 0 };
               const isShiny = SHINY_CODES.includes(code);
+              const isCollected = data.status === 'collected';
+
               return (
-                <div
+                <motion.div
                   key={code}
-                  className={`relative aspect-square rounded-full flex flex-col items-center justify-center border-2 transition-all cursor-pointer tactical-piece ${data.status === 'collected'
-                    ? 'bg-secondary border-white text-white scale-110'
-                    : 'bg-surface-color border-white/10 text-text-dim hover:border-white/30'
+                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  initial={false}
+                  animate={{ 
+                    scale: isCollected ? 1.05 : 1,
+                  }}
+                  className={`relative aspect-square rounded-full flex flex-col items-center justify-center border-2 transition-all cursor-pointer tactical-piece ${isCollected
+                    ? 'bg-secondary border-white text-white shadow-lg shadow-secondary/20'
+                    : 'bg-white/5 border-white/10 text-text-dim hover:border-white/30'
                     }`}
                   onClick={() => toggleSticker(code)}
                 >
@@ -251,22 +337,48 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
                       <Users size={10} className="text-yellow-400 fill-yellow-400" />
                     </div>
                   )}
-                  <span className="text-xs font-black">{code}</span>
-                  {data.status === 'collected' && (
-                    <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5 border border-white shadow-sm">
-                      <Check size={8} />
-                    </div>
-                  )}
+                  
+                  <span className="text-xs font-black">
+                    {code}
+                  </span>
+
+                  <AnimatePresence>
+                    {isCollected && (
+                      <motion.div 
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        className="bg-white text-secondary rounded-full p-0.5 mt-0.5 shadow-sm z-20"
+                      >
+                        <Check size={8} strokeWidth={5} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   <div
-                    className="absolute -bottom-2 left-0 right-0 flex items-center justify-center gap-1 z-30"
+                    className="absolute -bottom-3 left-0 right-0 flex items-center justify-center gap-1 z-30"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <button onClick={(e) => { e.stopPropagation(); updateRepeated(code, -1); }} className="w-5 h-5 flex items-center justify-center rounded-full bg-accent hover:brightness-125 text-white shadow-md active:scale-90"><Minus size={10} /></button>
-                    <span className="text-[9px] font-black min-w-[14px] text-center bg-black/80 px-1 rounded-full text-white border border-white/20">{data.repeated || 0}</span>
-                    <button onClick={(e) => { e.stopPropagation(); updateRepeated(code, 1); }} className="w-5 h-5 flex items-center justify-center rounded-full bg-primary hover:brightness-125 text-white shadow-md active:scale-90"><Plus size={10} /></button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); updateRepeated(code, -1); }} 
+                      className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 hover:bg-accent text-white shadow-md active:scale-90 transition-colors backdrop-blur-sm"
+                    >
+                      <Minus size={10} />
+                    </button>
+                    
+                    <div className="bg-black/90 px-2 py-0.5 rounded-full border border-white/20 shadow-xl flex items-center gap-0.5">
+                      <span className="text-[7px] text-white/50 font-black uppercase">x</span>
+                      <span className="text-[10px] font-black text-white">{data.repeated || 0}</span>
+                    </div>
+
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); updateRepeated(code, 1); }} 
+                      className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 hover:bg-primary text-white shadow-md active:scale-90 transition-colors backdrop-blur-sm"
+                    >
+                      <Plus size={10} />
+                    </button>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>

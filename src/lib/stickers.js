@@ -105,7 +105,19 @@ export const ACHIEVEMENTS = [
   { id: 'master_teams', name: 'Mestre das Seleções', description: 'Complete 10 seleções', icon: 'Trophy' },
   { id: 'globetrotter', name: 'Globetrotter', description: 'Uma de cada categoria', icon: 'Globe' },
   { id: 'master_13', name: 'Mestre das Equipes', description: 'Cole todas as fotos de equipe (nº 13)', icon: 'UsersIcon' },
-  { id: 'full_album', name: 'Lenda Viva', description: 'Complete 100% do álbum', icon: 'Trophy' }
+  { id: 'full_album', name: 'Lenda Viva', description: 'Complete 100% do álbum', icon: 'Trophy' },
+  { id: 'elite_800', name: 'Dono do Estádio', description: 'Cole 800 figurinhas', icon: 'Target' },
+  { id: 'shiny_30', name: 'Galeria de Ouro', description: 'Cole 30 figurinhas brilhantes', icon: 'Sparkles' },
+  { id: 'ponta_lanca', name: 'Ponta de Lança', description: 'Cole a figurinha de abertura "00"', icon: 'Star' },
+  { id: 'pack_100', name: 'Diretoria', description: 'Abra mais de 100 pacotinhos', icon: 'Award' },
+  { id: 'south_america', name: 'Rei das Américas', description: 'Complete todas as seleções da América do Sul', icon: 'Globe' },
+  { id: 'super_negociador', name: 'Super Negociador', description: 'Tenha 100 figurinhas repetidas', icon: 'TrendingUp' },
+  { id: 'coca_fifa', name: 'Parceria Suprema', description: 'Complete as seções FIFA e Coca-Cola', icon: 'Flame' },
+  { id: 'first_100_percent_group', name: 'Dominador de Grupos', description: 'Complete 3 grupos inteiros', icon: 'Trophy' },
+  { id: 'super_classico', name: 'Super Clássico', description: 'Complete Brasil e Argentina por inteiro', icon: 'Trophy' },
+  { id: 'euro_complete', name: 'Euro Soberano', description: 'Complete as seleções da Europa', icon: 'Shield' },
+  { id: 'world_champions', name: 'Clube dos Campeões', description: 'Complete as 7 seleções campeãs mundiais do álbum', icon: 'Trophy' },
+  { id: 'world_tour', name: 'Volta ao Mundo', description: 'Cole figurinhas de 5 continentes', icon: 'Globe' }
 ];
 
 export const getAchievements = (collection) => {
@@ -118,11 +130,26 @@ export const getAchievements = (collection) => {
   if (stats.coladas >= 100) unlocked.add('century');
   if (stats.coladas >= 300) unlocked.add('elite_300');
   if (stats.coladas >= 500) unlocked.add('elite_500');
+  if (stats.coladas >= 800) unlocked.add('elite_800');
   if (stats.coladas / stats.total >= 0.5) unlocked.add('half_way');
   if (stats.coladasBrilhantes >= 5) unlocked.add('shiny_5');
   if (stats.coladasBrilhantes >= 15) unlocked.add('shiny_15');
+  if (stats.coladasBrilhantes >= 30) unlocked.add('shiny_30');
   if (stats.repetidas >= 10) unlocked.add('repeated_10');
   if (stats.repetidas >= 50) unlocked.add('trading_pro');
+  if (stats.repetidas >= 100) unlocked.add('super_negociador');
+  if (collection['00']?.status === 'collected') unlocked.add('ponta_lanca');
+  if ((stats.coladas + stats.repetidas) >= 500) unlocked.add('pack_100');
+  const wcBraComplete = CATEGORIES.find(c => c.id === 'brasil')?.stickers.every(code => collection[code]?.status === 'collected');
+  const wcArgComplete = CATEGORIES.find(c => c.id === 'argentina')?.stickers.every(code => collection[code]?.status === 'collected');
+  const wcGerComplete = CATEGORIES.find(c => c.id === 'alemanha')?.stickers.every(code => collection[code]?.status === 'collected');
+  const wcFraComplete = CATEGORIES.find(c => c.id === 'frança')?.stickers.every(code => collection[code]?.status === 'collected');
+  const wcUyComplete = CATEGORIES.find(c => c.id === 'uruguai')?.stickers.every(code => collection[code]?.status === 'collected');
+  const wcEspComplete = CATEGORIES.find(c => c.id === 'espanha')?.stickers.every(code => collection[code]?.status === 'collected');
+  const wcEngComplete = CATEGORIES.find(c => c.id === 'inglaterra')?.stickers.every(code => collection[code]?.status === 'collected');
+
+  if (wcBraComplete && wcArgComplete) unlocked.add('super_classico');
+  if (wcBraComplete && wcArgComplete && wcGerComplete && wcFraComplete && wcUyComplete && wcEspComplete && wcEngComplete) unlocked.add('world_champions');
 
   // Check if any team is complete
   let completeTeams = 0;
@@ -158,6 +185,52 @@ export const getAchievements = (collection) => {
     if (isGroupComplete && group.startsWith('Grupo')) unlocked.add('group_complete');
   }
 
+  // South America complete (Brasil, Argentina, Uruguai, Paraguai, Equador, Colômbia)
+  const brComplete = CATEGORIES.find(c => c.id === 'brasil')?.stickers.every(code => collection[code]?.status === 'collected');
+  const arComplete = CATEGORIES.find(c => c.id === 'argentina')?.stickers.every(code => collection[code]?.status === 'collected');
+  const uyComplete = CATEGORIES.find(c => c.id === 'uruguai')?.stickers.every(code => collection[code]?.status === 'collected');
+  const pyComplete = CATEGORIES.find(c => c.id === 'paraguai')?.stickers.every(code => collection[code]?.status === 'collected');
+  const ecComplete = CATEGORIES.find(c => c.id === 'equador')?.stickers.every(code => collection[code]?.status === 'collected');
+  const coComplete = CATEGORIES.find(c => c.id === 'colômbia')?.stickers.every(code => collection[code]?.status === 'collected');
+  if (brComplete && arComplete && uyComplete && pyComplete && ecComplete && coComplete) unlocked.add('south_america');
+  
+  // Coca + FIFA complete
+  const fifaComplete = CATEGORIES.find(c => c.id === 'fifa_world_cup')?.stickers.every(code => collection[code]?.status === 'collected');
+  const cocaComplete = CATEGORIES.find(c => c.id === 'coca-cola')?.stickers.every(code => collection[code]?.status === 'collected');
+  if (fifaComplete && cocaComplete) unlocked.add('coca_fifa');
+
+  // Complete 3 Groups
+  const groupList = [...new Set(CATEGORIES.map(c => c.group).filter(g => g.startsWith('Grupo')))];
+  let completeGroups = 0;
+  for (const group of groupList) {
+    const groupCats = CATEGORIES.filter(c => c.group === group);
+    const isGroupComplete = groupCats.every(cat => 
+      cat.stickers.every(code => collection[code]?.status === 'collected')
+    );
+    if (isGroupComplete) completeGroups++;
+  }
+  if (completeGroups >= 3) unlocked.add('first_100_percent_group');
+
+  // Euro complete
+  const euroCats = ['rep._tcheca', 'suíça', 'escócia', 'bósnia', 'alemanha', 'holanda', 'suécia', 'bélgica', 'espanha', 'frança', 'noruega', 'áustria', 'portugal', 'inglaterra', 'croácia'];
+  const euroComplete = euroCats.every(catId => 
+    CATEGORIES.find(c => c.id === catId)?.stickers.every(code => collection[code]?.status === 'collected')
+  );
+  if (euroComplete) unlocked.add('euro_complete');
+
+  // World Tour (5 continents)
+  const saCats = ['brasil', 'argentina', 'uruguai', 'paraguai', 'equador', 'colômbia'];
+  const naCats = ['méxico', 'canadá', 'estados_unidos', 'haiti', 'curaçao', 'panamá'];
+  const euCats = ['rep._tcheca', 'suíça', 'escócia', 'bósnia', 'alemanha', 'holanda', 'suécia', 'bélgica', 'espanha', 'frança', 'noruega', 'áustria', 'portugal', 'inglaterra', 'croácia'];
+  const afCats = ['áfrica_do_sul', 'marrocos', 'costa_do_marfim', 'tunísia', 'egito', 'senegal', 'argélia', 'congo', 'cabo_verde', 'gana'];
+  const asCats = ['coreia_do_sul', 'catar', 'austrália', 'japão', 'irã', 'nova_zelândia', 'arábia_saudita', 'iraque', 'jordânia', 'uzbequistão'];
+  const hasSa = saCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  const hasNa = naCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  const hasEu = euCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  const hasAf = afCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  const hasAs = asCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  if (hasSa && hasNa && hasEu && hasAf && hasAs) unlocked.add('world_tour');
+
   return unlocked;
 };
 
@@ -165,17 +238,54 @@ export const getAchievementProgress = (collection) => {
   const stats = calculateStats(collection);
   const progress = {};
 
+  const wcBrStickers = CATEGORIES.find(c => c.id === 'brasil')?.stickers || [];
+  const wcArStickers = CATEGORIES.find(c => c.id === 'argentina')?.stickers || [];
+  const wcEspStickers = CATEGORIES.find(c => c.id === 'espanha')?.stickers || [];
+  const wcFraStickers = CATEGORIES.find(c => c.id === 'frança')?.stickers || [];
+  const wcGerStickers = CATEGORIES.find(c => c.id === 'alemanha')?.stickers || [];
+  const wcUyStickers = CATEGORIES.find(c => c.id === 'uruguai')?.stickers || [];
+  const wcEngStickers = CATEGORIES.find(c => c.id === 'inglaterra')?.stickers || [];
+
   progress['first_10'] = { current: stats.coladas, target: 10 };
   progress['first_50'] = { current: stats.coladas, target: 50 };
   progress['century'] = { current: stats.coladas, target: 100 };
   progress['elite_300'] = { current: stats.coladas, target: 300 };
   progress['elite_500'] = { current: stats.coladas, target: 500 };
+  progress['elite_800'] = { current: stats.coladas, target: 800 };
   progress['half_way'] = { current: Math.min(100, Math.floor((stats.coladas / stats.total) * 100)), target: 50, isPercent: true };
   progress['shiny_5'] = { current: stats.coladasBrilhantes, target: 5 };
   progress['shiny_15'] = { current: stats.coladasBrilhantes, target: 15 };
+  progress['shiny_30'] = { current: stats.coladasBrilhantes, target: 30 };
   progress['repeated_10'] = { current: stats.repetidas, target: 10 };
   progress['trading_pro'] = { current: stats.repetidas, target: 50 };
+  progress['super_negociador'] = { current: stats.repetidas, target: 100 };
   progress['full_album'] = { current: stats.coladas, target: stats.total };
+  progress['ponta_lanca'] = { current: collection['00']?.status === 'collected' ? 1 : 0, target: 1 };
+  progress['pack_100'] = { current: stats.coladas + stats.repetidas, target: 500 };
+  // Super Classico progress
+  const scTotal = [...wcBrStickers, ...wcArStickers];
+  const scCollected = scTotal.filter(code => collection[code]?.status === 'collected').length;
+  progress['super_classico'] = { current: scCollected, target: scTotal.length };
+
+  // World Champions progress
+  const wcTotal = [...wcBrStickers, ...wcArStickers, ...wcGerStickers, ...wcFraStickers, ...wcUyStickers, ...wcEspStickers, ...wcEngStickers];
+  const wcCollected = wcTotal.filter(code => collection[code]?.status === 'collected').length;
+  progress['world_champions'] = { current: wcCollected, target: wcTotal.length };
+  
+  // South America progress (Brasil, Argentina, Uruguai, Paraguai, Equador, Colômbia)
+  const pyStickers = CATEGORIES.find(c => c.id === 'paraguai')?.stickers || [];
+  const ecStickers = CATEGORIES.find(c => c.id === 'equador')?.stickers || [];
+  const coStickers = CATEGORIES.find(c => c.id === 'colômbia')?.stickers || [];
+  const saTotalStickers = [...wcBrStickers, ...wcArStickers, ...wcUyStickers, ...pyStickers, ...ecStickers, ...coStickers];
+  const saCollected = saTotalStickers.filter(code => collection[code]?.status === 'collected').length;
+  progress['south_america'] = { current: saCollected, target: saTotalStickers.length };
+  
+  // Coca + FIFA progress
+  const fifaStickers = CATEGORIES.find(c => c.id === 'fifa_world_cup')?.stickers || [];
+  const cocaStickers = CATEGORIES.find(c => c.id === 'coca-cola')?.stickers || [];
+  const cfTotalStickers = [...fifaStickers, ...cocaStickers];
+  const cfCollected = cfTotalStickers.filter(code => collection[code]?.status === 'collected').length;
+  progress['coca_fifa'] = { current: cfCollected, target: cfTotalStickers.length };
 
   let completeTeams = 0;
   let categoriesWithStickers = 0;
@@ -205,16 +315,53 @@ export const getAchievementProgress = (collection) => {
   // Groups
   const groups = [...new Set(CATEGORIES.map(c => c.group).filter(g => g.startsWith('Grupo')))];
   let maxGroupProgress = 0;
+  let completeGroups = 0;
   for (const group of groups) {
     const groupCats = CATEGORIES.filter(c => c.group === group);
     const totalInGroup = groupCats.reduce((acc, c) => acc + c.stickers.length, 0);
     const collectedInGroup = groupCats.reduce((acc, c) => 
       acc + c.stickers.filter(code => collection[code]?.status === 'collected').length, 0
     );
-    if (collectedInGroup === totalInGroup) maxGroupProgress = totalInGroup;
+    if (collectedInGroup === totalInGroup) {
+      maxGroupProgress = totalInGroup;
+      completeGroups++;
+    }
     else if (collectedInGroup > maxGroupProgress) maxGroupProgress = collectedInGroup;
   }
   progress['group_complete'] = { current: completeTeams > 0 ? 1 : 0, target: 1 }; // Simplified or could be more complex
+  progress['first_100_percent_group'] = { current: completeGroups, target: 3 };
+
+  // Euro complete progress
+  const euroCats = ['rep._tcheca', 'suíça', 'escócia', 'bósnia', 'alemanha', 'holanda', 'suécia', 'bélgica', 'espanha', 'frança', 'noruega', 'áustria', 'portugal', 'inglaterra', 'croácia'];
+  let euroCollected = 0;
+  let euroTotal = 0;
+  euroCats.forEach(catId => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    if (cat) {
+      euroTotal += cat.stickers.length;
+      euroCollected += cat.stickers.filter(code => collection[code]?.status === 'collected').length;
+    }
+  });
+  progress['euro_complete'] = { current: euroCollected, target: euroTotal };
+
+  // World Tour progress
+  const saCats = ['brasil', 'argentina', 'uruguai', 'paraguai', 'equador', 'colômbia'];
+  const naCats = ['méxico', 'canadá', 'estados_unidos', 'haiti', 'curaçao', 'panamá'];
+  const euCats = ['rep._tcheca', 'suíça', 'escócia', 'bósnia', 'alemanha', 'holanda', 'suécia', 'bélgica', 'espanha', 'frança', 'noruega', 'áustria', 'portugal', 'inglaterra', 'croácia'];
+  const afCats = ['áfrica_do_sul', 'marrocos', 'costa_do_marfim', 'tunísia', 'egito', 'senegal', 'argélia', 'congo', 'cabo_verde', 'gana'];
+  const asCats = ['coreia_do_sul', 'catar', 'austrália', 'japão', 'irã', 'nova_zelândia', 'arábia_saudita', 'iraque', 'jordânia', 'uzbequistão'];
+  const hasSa = saCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  const hasNa = naCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  const hasEu = euCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  const hasAf = afCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  const hasAs = asCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
+  let continents = 0;
+  if (hasSa) continents++;
+  if (hasNa) continents++;
+  if (hasEu) continents++;
+  if (hasAf) continents++;
+  if (hasAs) continents++;
+  progress['world_tour'] = { current: continents, target: 5 };
 
   return progress;
 };

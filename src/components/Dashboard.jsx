@@ -6,9 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CATEGORIES } from '../lib/stickers';
 import html2canvas from 'html2canvas';
 
-function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, settings, onUpdateCollection, setActiveTab }) {
+function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, settings, onUpdateCollection, setActiveTab, unlockedAchievements = [] }) {
   const stats = calculateStats(collection);
   const t = translations[lang];
+  const currentUnlocked = getAchievements(collection);
+  const unlockedSet = new Set([...unlockedAchievements, ...currentUnlocked]);
   const [copied, setCopied] = useState(false);
   
   const estimate = calculateCompletionEstimate(stats.coladas, stats.total);
@@ -570,12 +572,13 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-6 pb-6 px-1">
                     {repeatedStickers.map(([code, data]) => {
                       const isShiny = SHINY_CODES.includes(code);
+                      const isCollected = data.status === 'collected';
                       return (
                         <div key={code} className="flex flex-col items-center gap-3">
                           <div
-                            className={`relative aspect-square w-full rounded-full flex flex-col items-center justify-center border-2 transition-all tactical-piece ${data.status === 'collected'
-                              ? 'bg-secondary border-white text-white'
-                              : 'bg-surface-color border-white/10 text-text-dim'
+                            className={`relative aspect-square w-full rounded-full flex flex-col items-center justify-center border-2 transition-all tactical-piece ${isCollected
+                              ? 'bg-secondary border-white text-white shadow-lg shadow-secondary/20'
+                              : 'bg-white/5 border-white/10 text-text-dim'
                               }`}
                           >
                             {isShiny && (
@@ -588,19 +591,31 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                                 <UsersIcon size={10} className="text-yellow-400 fill-yellow-400" />
                               </div>
                             )}
-                            <span className="text-[10px] font-black">{code}</span>
                             
-                            <div className="absolute -bottom-2 left-0 right-0 flex items-center justify-center gap-1 z-30">
+                            <span className="text-xs font-black">{code}</span>
+
+                            {isCollected && (
+                              <div className="bg-white text-secondary rounded-full p-0.5 mt-0.5 shadow-sm z-20">
+                                <Check size={8} strokeWidth={5} />
+                              </div>
+                            )}
+                            
+                            <div className="absolute -bottom-3 left-0 right-0 flex items-center justify-center gap-1 z-30">
                               <button 
                                 onClick={(e) => { e.stopPropagation(); handleUpdateRepeated(code, -1); }} 
-                                className="w-5 h-5 flex items-center justify-center rounded-full bg-accent hover:brightness-125 text-white shadow-md active:scale-90"
+                                className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 hover:bg-accent text-white shadow-md active:scale-90 transition-colors backdrop-blur-sm"
                               >
                                 <Minus size={10} />
                               </button>
-                              <span className="text-[9px] font-black min-w-[14px] text-center bg-black/80 px-1 rounded-full text-white border border-white/20">{data.repeated || 0}</span>
+                              
+                              <div className="bg-black/90 px-2 py-0.5 rounded-full border border-white/20 shadow-xl flex items-center gap-0.5">
+                                <span className="text-[7px] text-white/50 font-black uppercase">x</span>
+                                <span className="text-[10px] font-black text-white">{data.repeated || 0}</span>
+                              </div>
+
                               <button 
                                 onClick={(e) => { e.stopPropagation(); handleUpdateRepeated(code, 1); }} 
-                                className="w-5 h-5 flex items-center justify-center rounded-full bg-primary hover:brightness-125 text-white shadow-md active:scale-90"
+                                className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 hover:bg-primary text-white shadow-md active:scale-90 transition-colors backdrop-blur-sm"
                               >
                                 <Plus size={10} />
                               </button>
@@ -647,6 +662,14 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                   background: `linear-gradient(135deg, ${settings.boardColor || '#064e3b'} 0%, #022c22 100%)`,
                 }}
               >
+                {/* Close Button */}
+                <button 
+                  onClick={() => setIsSummaryOpen(false)}
+                  className="absolute top-4 right-4 z-20 p-2 text-white/40 hover:text-white transition-colors bg-white/5 rounded-full hover:bg-white/10 border border-white/5 active:scale-90"
+                >
+                  <X size={18} />
+                </button>
+
                 {/* Background Pattern (Football Grid) */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none" 
                   style={{ 
@@ -760,7 +783,7 @@ function Dashboard({ collection, lang = 'pt', packets = 0, onUpdatePackets, sett
                     </div>
                     <p className="text-[9px] font-black text-yellow-400 uppercase tracking-widest mb-1">{t.achievements}</p>
                     <div className="flex items-baseline gap-1">
-                      <p className="text-2xl font-black text-white">{getAchievements(collection).size}</p>
+                      <p className="text-2xl font-black text-white">{unlockedSet.size}</p>
                       <p className="text-[13px] font-bold text-white/30">/ {ACHIEVEMENTS.length}</p>
                     </div>
                   </div>

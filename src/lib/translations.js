@@ -67,7 +67,12 @@ export const translations = {
     copySuccess: "Lista Copiada!",
     summary: "Resumo do Álbum",
     summaryTitle: "Meu Status no FiguritaZ",
-    topTeam: "Seleção mais completa"
+    topTeam: "Seleção mais completa",
+    importTitle: "Importar Coleção (Lista 'Me Faltan')",
+    importDescription: "Cole aqui a lista de figurinhas que faltam para marcar automaticamente as que você já tem.",
+    importButton: "Processar e Importar",
+    importSuccess: "Coleção importada com sucesso!",
+    importConfirm: "Isso irá substituir sua coleção atual. Deseja continuar?"
   },
   en: {
     dashboard: "Dashboard",
@@ -137,7 +142,12 @@ export const translations = {
     copySuccess: "List Copied!",
     summary: "Album Summary",
     summaryTitle: "My FiguritaZ Status",
-    topTeam: "Most complete team"
+    topTeam: "Most complete team",
+    importTitle: "Import Collection ('Missing' List)",
+    importDescription: "Paste here the list of missing stickers to automatically mark those you already have.",
+    importButton: "Process and Import",
+    importSuccess: "Collection imported successfully!",
+    importConfirm: "This will replace your current collection. Do you want to continue?"
   },
   es: {
     dashboard: "Dashboard",
@@ -207,6 +217,11 @@ export const translations = {
     copySuccess: "¡Lista Copiada!",
     summary: "Resumen del Álbum",
     summaryTitle: "Mi Estado en FiguritaZ",
-    topTeam: "Equipo más completo"
+    topTeam: "Equipo más completo",
+    importTitle: "Importar Colección (Lista 'Me Faltan')",
+    importDescription: "Pega aquí la lista de las figuritaZ que te faltan para marcar automáticamente las que ya tienes.",
+    importButton: "Procesar e Importar",
+    importSuccess: "¡Colección importada con éxito!",
+    importConfirm: "¿Esto reemplazará tu colección actual. ¿Deseas continuar?"
   }
 };
