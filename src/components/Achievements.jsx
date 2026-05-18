@@ -16,31 +16,34 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
 
   // Global device tilt state for mobile accelerometer support
   const [deviceTilt, setDeviceTilt] = useState({ x: 0, y: 0, active: false });
-  const [useSensor, setUseSensor] = useState(false);
+  const [useSensor, setUseSensor] = useState(true);
   const [sensorPermission, setSensorPermission] = useState('default');
 
-  // Request Permission and toggle Gyroscope/DeviceOrientation
-  const toggleGyroscope = async () => {
-    if (
-      typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function'
-    ) {
-      try {
-        const permissionState = await DeviceOrientationEvent.requestPermission();
-        setSensorPermission(permissionState);
-        if (permissionState === 'granted') {
-          setUseSensor(!useSensor);
-        } else {
-          alert(lang === 'pt' ? 'Permissão para sensores de movimento negada.' : lang === 'en' ? 'Movement sensor permission denied.' : 'Permiso de sensores de movimiento denegado.');
+  // Silently request iOS permission on first tap anywhere inside page
+  useEffect(() => {
+    const requestiOSPermission = async () => {
+      if (
+        typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function' &&
+        sensorPermission === 'default'
+      ) {
+        try {
+          const permissionState = await DeviceOrientationEvent.requestPermission();
+          setSensorPermission(permissionState);
+          if (permissionState === 'granted') {
+            setUseSensor(true);
+          }
+        } catch (error) {
+          console.log('Orientation permission failed or was not inside a user gesture:', error);
         }
-      } catch (error) {
-        console.error('Error asking for orientation permission:', error);
       }
-    } else {
-      // Android / non-iOS standard web view where permission isn't requested explicitly
-      setUseSensor(!useSensor);
-    }
-  };
+    };
+
+    window.addEventListener('click', requestiOSPermission, { once: true });
+    return () => {
+      window.removeEventListener('click', requestiOSPermission);
+    };
+  }, [sensorPermission]);
 
   useEffect(() => {
     if (useSensor) {
@@ -84,20 +87,6 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
               {lang === 'pt' ? 'Sua jornada tática e conquistas como colecionador.' : lang === 'en' ? 'Your tactical journey and achievements as a collector.' : 'Tu viaje táctico y logros como coleccionador.'}
             </p>
           </div>
-          
-          {/* Gyroscope 3D Control Trigger */}
-          <button 
-            onClick={toggleGyroscope}
-            className={`flex items-center justify-center gap-2 self-start px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 duration-300 shadow-md ${
-              useSensor 
-                ? 'bg-primary/20 border-primary text-primary shadow-primary/20 animate-pulse' 
-                : 'bg-black/35 border-white/10 text-text-dim hover:bg-black/50'
-            }`}
-          >
-            <span className="text-sm">📳</span>
-            {lang === 'pt' ? 'Giroscópio 3D' : lang === 'en' ? '3D Gyroscope' : 'Giroscopio 3D'}
-            <span className={`w-2 h-2 rounded-full transition-colors duration-300 ${useSensor ? 'bg-primary shadow-[0_0_8px_var(--color-primary)]' : 'bg-text-dim'}`} />
-          </button>
         </div>
 
         {/* Master Progress Bar */}
