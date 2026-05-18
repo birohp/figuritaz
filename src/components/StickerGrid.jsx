@@ -269,15 +269,22 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
                 className="glass-card p-4 text-left hover:border-primary transition-all group active:scale-95"
               >
                 <h3 className="text-[10px] font-black uppercase tracking-tighter mb-3 text-text-dim group-hover:text-primary">{group}</h3>
-                <div className={`grid ${isSpecial ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
+                <div className={`grid ${
+                  isSpecial 
+                    ? 'grid-cols-1' 
+                    : (colsCount === 1 ? 'grid-cols-4' : 'grid-cols-2')
+                } gap-2`}>
                   {teams.map(team => (
                     <div key={team.id} className={`flex flex-col items-center gap-1 ${isSpecial ? 'h-24' : ''}`}>
                       <div className={`w-full flex items-center justify-center rounded-xl overflow-hidden ${isSpecial ? 'h-full' : 'aspect-[3/2] bg-white/5 p-0.5 shadow-inner'}`}>
                         <TeamIcon team={team} isSpecial={isSpecial} />
                       </div>
-                      <span className="text-[8px] font-bold truncate w-full text-center text-text-dim">
-                        {team.name}
-                      </span>
+                      {/* Hide country name on 1-column view to keep it extremely clean */}
+                      {(colsCount === 2 || isSpecial) && (
+                        <span className="text-[8px] font-bold truncate w-full text-center text-text-dim">
+                          {team.name}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
