@@ -92,7 +92,13 @@ export const translations = {
     finalProjection: "Projeção Final",
     spent: "gastos",
     toInvestEst: "A investir (est.)",
-    finalTotalCost: "Custo Total Final"
+    finalTotalCost: "Custo Total Final",
+    onboardingTitle: "Instrução Tática",
+    onboardingSubtitle: "Para organizar sua campanha e conquistar o título, siga estas manobras:",
+    onboardingStep1: "Toque no <b>número da figurinha</b> para colá-la no seu álbum.",
+    onboardingStep2: "Use o <b>+ e -</b> na base da figurinha para gerenciar suas <b>repetidas</b>.",
+    dontShowAgain: "Não mostrar novamente",
+    gotItCoach: "Entendido, Professor!"
   },
   en: {
     dashboard: "Dashboard",
@@ -187,7 +193,13 @@ export const translations = {
     finalProjection: "Final Projection",
     spent: "spent",
     toInvestEst: "To invest (est.)",
-    finalTotalCost: "Final Total Cost"
+    finalTotalCost: "Final Total Cost",
+    onboardingTitle: "Tactical Instruction",
+    onboardingSubtitle: "To organize your campaign and conquer the title, follow these moves:",
+    onboardingStep1: "Tap the <b>sticker number</b> to glue it to your album.",
+    onboardingStep2: "Use the <b>+ and -</b> at the bottom of the sticker to manage your <b>duplicates</b>.",
+    dontShowAgain: "Don't show again",
+    gotItCoach: "Got it, Coach!"
   },
   es: {
     dashboard: "Dashboard",
@@ -282,6 +294,12 @@ export const translations = {
     finalProjection: "Proyección Final",
     spent: "gastos",
     toInvestEst: "A invertir (est.)",
-    finalTotalCost: "Costo Total Final"
+    finalTotalCost: "Costo Total Final",
+    onboardingTitle: "Instrucción Táctica",
+    onboardingSubtitle: "Para organizar tu campaña y conquistar el título, sigue estas maniobras:",
+    onboardingStep1: "Toca en el <b>número de la figurita</b> para pegarla en tu álbum.",
+    onboardingStep2: "Usa el <b>+ y -</b> en la base de la figurita para gestionar tus <b>repetidas</b>.",
+    dontShowAgain: "No mostrar de nuevo",
+    gotItCoach: "¡Entendido, Entrenador!"
   }
 };

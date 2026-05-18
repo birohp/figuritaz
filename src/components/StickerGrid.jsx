@@ -151,24 +151,20 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl font-black text-text-color uppercase tracking-tight">Instrução Tática</h2>
+                <h2 className="text-2xl font-black text-text-color uppercase tracking-tight">{t.onboardingTitle}</h2>
                 <p className="text-xs text-text-dim leading-relaxed">
-                  Para organizar sua campanha e conquistar o título, siga estas manobras:
+                  {t.onboardingSubtitle}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 text-left">
                 <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
                   <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-black shrink-0">1</div>
-                  <p className="text-[10px] font-medium text-text-color">
-                    Toque no <b>número da figurinha</b> para colá-la no seu álbum.
-                  </p>
+                  <p className="text-[10px] font-medium text-text-color" dangerouslySetInnerHTML={{ __html: t.onboardingStep1 }} />
                 </div>
                 <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
                   <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-[10px] font-black shrink-0">2</div>
-                  <p className="text-[10px] font-medium text-text-color">
-                    Use o <b>+ e -</b> na base da figurinha para gerenciar suas <b>repetidas</b>.
-                  </p>
+                  <p className="text-[10px] font-medium text-text-color" dangerouslySetInnerHTML={{ __html: t.onboardingStep2 }} />
                 </div>
               </div>
 
@@ -180,7 +176,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
                   <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${dontShowAgain ? 'bg-primary border-primary' : 'border-white/20 hover:border-white/40'}`}>
                     {dontShowAgain && <Check size={14} strokeWidth={4} className="text-white" />}
                   </div>
-                  <span className="text-[10px] font-bold text-text-dim group-hover:text-text-color transition-colors">Não mostrar novamente</span>
+                  <span className="text-[10px] font-bold text-text-dim group-hover:text-text-color transition-colors">{t.dontShowAgain}</span>
                 </button>
               </div>
 
@@ -188,7 +184,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
                 onClick={handleCloseOnboarding}
                 className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-sm active:scale-95 transition-all shadow-xl shadow-primary/20 hover:brightness-110"
               >
-                Entendido, Professor!
+                {t.gotItCoach}
               </button>
             </motion.div>
           </motion.div>
