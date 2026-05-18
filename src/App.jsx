@@ -14,6 +14,8 @@ import { translations } from './lib/translations';
 import { getAchievements } from './lib/stickers';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 
 
 function App() {
@@ -115,6 +117,59 @@ function App() {
 
     localStorage.setItem('app_settings', JSON.stringify(settings));
   }, [settings]);
+
+  // Handle Android hardware back button
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const handleBackButton = async (data) => {
+      // 1. Check if any modal backdrop exists in the DOM
+      const modalBackdrop = document.querySelector('.backdrop-blur-sm');
+      if (modalBackdrop || isSettingsOpen) {
+        if (isSettingsOpen) {
+          setIsSettingsOpen(false);
+          return;
+        }
+
+        if (modalBackdrop) {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const closeButton = buttons.find(btn => {
+            const text = btn.innerText?.toLowerCase() || '';
+            const hasCloseText = text.includes('fechar') || text.includes('close') || text.includes('cancelar') || text.includes('ignorar');
+            const hasCloseIcon = btn.querySelector('svg');
+            return hasCloseText || hasCloseIcon;
+          });
+          
+          if (closeButton) {
+            closeButton.click();
+            return;
+          }
+        }
+      }
+
+      // 2. If no modal is open, check if we can go back in history
+      if (data.canGoBack) {
+        window.history.back();
+      } else {
+        const confirmExit = window.confirm(
+          settings.lang === 'pt'
+            ? 'Deseja realmente sair do FiguritaZ?'
+            : settings.lang === 'es'
+            ? '¿Realmente deseas salir de FiguritaZ?'
+            : 'Do you really want to exit FiguritaZ?'
+        );
+        if (confirmExit) {
+          CapApp.exitApp();
+        }
+      }
+    };
+
+    const listener = CapApp.addListener('backButton', handleBackButton);
+
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, [isSettingsOpen, settings.lang]);
 
   // Parse trade partner parameter on mount
   useEffect(() => {
