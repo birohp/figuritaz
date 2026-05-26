@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { calculateStats, ALL_VALID_CODES, SHINY_CODES, calculateCompletionEstimate, getAchievements, ACHIEVEMENTS } from '../lib/stickers';
-import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet, ExternalLink, Award, BarChart3, Download, LayoutGrid } from 'lucide-react';
+import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet, ExternalLink, Award, BarChart3, Download, LayoutGrid, Trash2 } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CATEGORIES } from '../lib/stickers';
@@ -49,9 +49,134 @@ function Dashboard({
   const unlockedSet = new Set([...unlockedAchievements, ...currentUnlocked]);
   const [copied, setCopied] = useState(false);
   
-  const estimate = calculateCompletionEstimate(stats.coladas, stats.total);
-  const remainingCost = estimate.remaining * (settings?.packetPrice || 4.00);
-  const totalCost = estimate.total * (settings?.packetPrice || 4.00);
+  const [financeStrategy, setFinanceStrategy] = useState('coop');
+  const [financeGroupSize, setFinanceGroupSize] = useState(5);
+  const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
+
+  const getCategoryEmoji = (flag) => {
+    if (flag === 'fifa') return '🏆';
+    if (flag === 'coca') return '🔴';
+    if (flag === 'gb-sct') return 'An'; // We can use Scottish flag fallback or emoji
+    if (flag === 'gb-eng') return 'An';
+    if (flag === 'jp') return '🇯🇵';
+    
+    // Custom flags mapping to guarantee correct rendering
+    const customFlags = {
+      'fifa': '🏆', 'coca': '🔴', 'gb-sct': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'gb-eng': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+      'mx': '🇲🇽', 'za': '🇿🇦', 'kr': '🇰🇷', 'cz': '🇨🇿', 'ca': '🇨🇦', 'ba': '🇧🇦',
+      'qa': '🇶🇦', 'ch': '🇨🇭', 'br': '🇧🇷', 'ma': '🇲🇦', 'ht': '🇭🇹', 'us': '🇺🇸',
+      'py': '🇵🇾', 'au': '🇦🇺', 'tr': '🇹🇷', 'de': '🇩🇪', 'cw': '🇨🇼', 'ci': '🇨🇮',
+      'ec': '🇪🇨', 'nl': '🇳🇱', 'se': '🇸🇪', 'tn': '🇹🇳', 'be': '🇧🇪', 'eg': '🇪🇬',
+      'ir': '🇮🇷', 'nz': '🇳🇿', 'es': '🇪🇸', 'cv': '🇨🇻', 'sa': '🇸🇦', 'uy': '🇺🇾',
+      'fr': '🇫🇷', 'sn': '🇸🇳', 'iq': '🇮🇶', 'no': '🇳🇴', 'ar': '🇦🇷', 'dz': '🇩🇿',
+      'at': '🇦🇹', 'jo': '🇯🇴', 'pt': '🇵🇹', 'cd': '🇨🇩', 'uz': '🇺🇿', 'co': '🇨🇴',
+      'hr': '🇭🇷', 'gh': '🇬🇭', 'pa': '🇵🇦'
+    };
+    if (customFlags[flag]) return customFlags[flag];
+
+    try {
+      const codePoints = flag
+        .toUpperCase()
+        .split('')
+        .map(char => 127397 + char.charCodeAt(0));
+      return String.fromCodePoint(...codePoints);
+    } catch (e) {
+      return '🏳️';
+    }
+  };
+
+  const getCategoryPrefix = (cat) => {
+    if (cat.id === 'fifa_world_cup') return 'FWC';
+    if (cat.id === 'coca-cola') return 'CC';
+    const firstLetterCode = cat.stickers.find(code => /^[A-Z]+/.test(code));
+    if (firstLetterCode) {
+      const match = firstLetterCode.match(/^[A-Z]+/);
+      return match ? match[0] : '';
+    }
+    return '';
+  };
+
+  const getFormattedWishlistText = () => {
+    const lines = [];
+    CATEGORIES.forEach(cat => {
+      const missing = cat.stickers.filter(code => !collection[code] || collection[code].status !== 'collected');
+      if (missing.length > 0) {
+        const emoji = getCategoryEmoji(cat.flag);
+        const prefix = getCategoryPrefix(cat);
+        const numbersOnly = missing.map(code => {
+          if (code === '00') return '00';
+          return code.replace(prefix, '');
+        });
+        lines.push(`${prefix} ${emoji}: ${numbersOnly.join(', ')}`);
+      }
+    });
+    return lines.join('\n');
+  };
+
+  const getFormattedRepeatedText = () => {
+    const lines = [];
+    CATEGORIES.forEach(cat => {
+      const reps = cat.stickers.filter(code => collection[code]?.repeated > 0);
+      if (reps.length > 0) {
+        const emoji = getCategoryEmoji(cat.flag);
+        const prefix = getCategoryPrefix(cat);
+        const numbersOnly = reps.map(code => {
+          const data = collection[code];
+          const num = code === '00' ? '00' : code.replace(prefix, '');
+          return `${num}${data.repeated > 1 ? ` (x${data.repeated})` : ''}`;
+        });
+        lines.push(`${prefix} ${emoji}: ${numbersOnly.join(', ')}`);
+      }
+    });
+    return lines.join('\n');
+  };
+
+  const getScientificEstimate = () => {
+    const N = stats.total || 994;
+    const coladas = stats.coladas;
+    const packetPrice = settings?.packetPrice || 4.00;
+    const stickersPerPack = 7; // 7 stickers per pack
+    
+    let remainingPacks = 0;
+    let directCost = 0;
+    
+    // 1. Lone Collector Strategy (CCP 100% completion)
+    let harmonicCCP = 0;
+    const missing = N - coladas;
+    for (let i = 1; i <= missing; i++) {
+      harmonicCCP += 1 / i;
+    }
+    const expectedPacksCCP = Math.ceil((N * harmonicCCP) / stickersPerPack);
+    
+    if (financeStrategy === 'ccp') {
+      remainingPacks = expectedPacksCCP;
+    } 
+    // 2. Cooperative Strategy (Group size K)
+    else {
+      const expectedTotalStickers = N * (1 + (Math.log(N) - 1.2) / financeGroupSize);
+      const totalStickersBought = coladas + stats.repetidas;
+      remainingPacks = Math.max(0, Math.ceil((expectedTotalStickers - totalStickersBought) / stickersPerPack));
+    }
+    
+    const remainingPacksCost = remainingPacks * packetPrice;
+    const remainingCost = remainingPacksCost + directCost;
+    
+    const ccpRemainingCost = expectedPacksCCP * packetPrice;
+    const savings = Math.max(0, ccpRemainingCost - remainingCost);
+    
+    return {
+      remainingPacks,
+      remainingCost,
+      savings,
+      totalCost: (packets * packetPrice) + remainingCost
+    };
+  };
+
+  const sciEstimate = getScientificEstimate();
+  const remainingCost = sciEstimate.remainingCost;
+  const totalCost = sciEstimate.totalCost;
+  const remainingPacks = sciEstimate.remainingPacks;
+  const savings = sciEstimate.savings;
 
   // States for Modals
   const [isCompareOpen, setIsCompareOpen] = useState(false);
@@ -60,6 +185,7 @@ function Dashboard({
   const [copiedTradeSummary, setCopiedTradeSummary] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copiedTradeLink, setCopiedTradeLink] = useState(false);
+  const [isCloudTradeModalOpen, setIsCloudTradeModalOpen] = useState(false);
   const [pastedText, setPastedText] = useState('');
   const [analysis, setAnalysis] = useState(null);
 
@@ -77,38 +203,32 @@ function Dashboard({
     onUpdateCollection(newCollection);
   };
 
+  const handleClearAllRepeated = () => {
+    const confirmClear = window.confirm(t.confirmClearRepeated || 'Deseja apagar todas as figurinhas repetidas?');
+    if (!confirmClear) return;
+    
+    const newCollection = { ...collection };
+    Object.keys(newCollection).forEach(code => {
+      if (newCollection[code] && newCollection[code].repeated > 0) {
+        newCollection[code] = { ...newCollection[code], repeated: 0 };
+      }
+    });
+    onUpdateCollection(newCollection);
+  };
+
   const repeatedStickers = ALL_VALID_CODES
     .filter(code => collection[code]?.repeated > 0)
     .map(code => [code, collection[code]]);
 
   const getProgressMessage = (percent) => {
     const p = parseFloat(percent);
-    if (lang === 'en') {
-      if (p >= 100) return "Album complete! You're a tactical master!";
-      if (p >= 90) return "Final stretch! Just a few more adjustments for the title!";
-      if (p >= 75) return "Great game volume! The team is well-coordinated.";
-      if (p >= 50) return "Midfield dominated! Keep moving forward.";
-      if (p >= 25) return "First half concluded. Let's go for the comeback!";
-      if (p > 0) return "The game has started! Organize your collection.";
-      return "Team lined up! Start sticking your stickers.";
-    }
-    if (lang === 'es') {
-      if (p >= 100) return "¡Álbum completo! ¡Eres un maestro táctico!";
-      if (p >= 90) return "¡Recta final! ¡Solo unos pocos ajustes más para el título!";
-      if (p >= 75) return "¡Gran volumen de juego! El equipo está compenetrado.";
-      if (p >= 50) return "¡Medio campo dominado! Sigue avanzando.";
-      if (p >= 25) return "Primer tiempo concluido. ¡Vamos por la remontada!";
-      if (p > 0) return "¡El juego ha comenzado! Organiza tu colección.";
-      return "¡Equipo alineado! Comienza a pegar tus figuritaZ.";
-    }
-    // Default PT
-    if (p >= 100) return "Álbum completo! Você é um mestre tático!";
-    if (p >= 90) return "Reta final! Só mais alguns ajustes para o título!";
-    if (p >= 75) return "Ótimo volume de jogo! O time está entrosado.";
-    if (p >= 50) return "Meio de campo dominado! Continue avançando.";
-    if (p >= 25) return "Primeiro tempo concluído. Vamos para a virada!";
-    if (p > 0) return "O jogo começou! Organize sua coleção.";
-    return "Time escalado! Comece a colar suas figurinhas.";
+    if (p >= 100) return t.progress100;
+    if (p >= 90) return t.progress90;
+    if (p >= 75) return t.progress75;
+    if (p >= 50) return t.progress50;
+    if (p >= 25) return t.progress25;
+    if (p > 0) return t.progress0;
+    return t.progressStart;
   };
 
   const handleShare = () => {
@@ -136,7 +256,7 @@ function Dashboard({
       })
       .join(', ');
 
-    const shareText = repetidas || (lang === 'pt' ? 'Nenhuma repetida ainda.' : lang === 'en' ? 'No duplicates yet.' : 'Ninguna repetida aún.');
+    const shareText = repetidas || t.noDuplicatesYet;
 
     if (navigator.share) {
       try {
@@ -157,12 +277,71 @@ function Dashboard({
   const [analysisMode, setAnalysisMode] = useState('friend_repeated'); // or 'friend_wishlist'
 
   const handleAnalyze = () => {
-    const foundCodes = pastedText.match(/[A-Z0-9]+/g) || [];
-    const validFound = foundCodes
-      .map(c => c.toUpperCase())
-      .filter(c => ALL_VALID_CODES.includes(c));
-    
-    const uniqueFound = [...new Set(validFound)];
+    // 1. Build a dynamic set of all valid category prefixes (e.g. 'MEX', 'RSA', 'FWC', 'CC')
+    const prefixes = new Set();
+    ALL_VALID_CODES.forEach(code => {
+      const match = code.match(/^([A-Z]+)/);
+      if (match) {
+        prefixes.add(match[1]);
+      }
+    });
+
+    const parsedCodes = new Set();
+
+    // 2. Process the pasted text line by line
+    const lines = pastedText.split('\n');
+    lines.forEach(line => {
+      const upperLine = line.toUpperCase();
+
+      // Step 2a: Find direct full codes in the line (e.g. "MEX6", "FWC14")
+      const directCodes = upperLine.match(/[A-Z]+[0-9]+/g) || [];
+      directCodes.forEach(code => {
+        if (ALL_VALID_CODES.includes(code)) {
+          parsedCodes.add(code);
+        }
+      });
+
+      // Special case: direct '00' code support
+      if (/\b00\b/.test(upperLine)) {
+        parsedCodes.add('00');
+      }
+
+      // Step 2b: Find segment-based list prefixes (e.g. "MEX 🇲🇽: 6, 8, 9")
+      const prefixMatches = [];
+      const regex = /\b([A-Z]+)\b/g;
+      let match;
+      while ((match = regex.exec(upperLine)) !== null) {
+        if (prefixes.has(match[1])) {
+          prefixMatches.push({
+            prefix: match[1],
+            index: match.index,
+            endIndex: regex.lastIndex
+          });
+        }
+      }
+
+      // If we have prefix matches, process each prefix's segment of numbers
+      for (let i = 0; i < prefixMatches.length; i++) {
+        const current = prefixMatches[i];
+        const next = prefixMatches[i + 1];
+
+        // Segment text goes from the end of current prefix match to the start of the next prefix match (or line end)
+        const segmentStart = current.endIndex;
+        const segmentEnd = next ? next.index : upperLine.length;
+        const segment = upperLine.substring(segmentStart, segmentEnd);
+
+        // Extract all distinct numbers in this segment and combine with the current prefix
+        const numbers = segment.match(/\b\d+\b/g) || [];
+        numbers.forEach(num => {
+          const combinedCode = current.prefix + num;
+          if (ALL_VALID_CODES.includes(combinedCode)) {
+            parsedCodes.add(combinedCode);
+          }
+        });
+      }
+    });
+
+    const uniqueFound = Array.from(parsedCodes);
 
     if (uniqueFound.length === 0) {
       setAnalysis({ error: t.noneFound });
@@ -187,7 +366,7 @@ function Dashboard({
       .filter(code => !collection[code] || collection[code].status !== 'collected')
       .join(', ');
 
-    const shareText = `${t.wishlistTitle}\n\n${missing || (lang === 'pt' ? 'Nenhuma! Álbum completo!' : 'None! Album complete!')}`;
+    const shareText = `${t.wishlistTitle}\n\n${missing || t.noneAlbumComplete}`;
 
     if (navigator.share) {
       try {
@@ -248,8 +427,8 @@ function Dashboard({
           if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'status.png', { type: 'image/png' })] })) {
             await navigator.share({
               files: [new File([blob], 'status.png', { type: 'image/png' })],
-              title: 'Meu Status no FiguritaZ!',
-              text: `Confira meu progresso no FiguritaZ! Já completei ${stats.porcentagem}% do álbum! 🏆`
+              title: t.myStatusTitle,
+              text: t.myStatusText.replace('{p}', stats.porcentagem)
             });
           }
         });
@@ -260,13 +439,14 @@ function Dashboard({
   };
 
   const handleCopyTradeSummary = async () => {
-    const givesList = gives.join(', ') || (lang === 'pt' ? 'Nenhuma' : lang === 'en' ? 'None' : 'Ninguna');
-    const receivesList = receives.join(', ') || (lang === 'pt' ? 'Nenhuma' : lang === 'en' ? 'None' : 'Ninguna');
-    const summaryText = lang === 'pt'
-      ? `🤝 Match Perfeito no FiguritaZ!\n\n🔹 Eu envio para ${partnerName}: ${givesList} (${gives.length} Fig.)\n🔸 ${partnerName} envia para mim: ${receivesList} (${receives.length} Fig.)\n\nGerado em figuritaz.web.app`
-      : lang === 'en'
-      ? `🤝 Perfect Swap on FiguritaZ!\n\n🔹 I give ${partnerName}: ${givesList} (${gives.length} stickers)\n🔸 ${partnerName} gives me: ${receivesList} (${receives.length} stickers)\n\nGenerated at figuritaz.web.app`
-      : `🤝 ¡Match de Intercambio en FiguritaZ!\n\n🔹 Le envío a ${partnerName}: ${givesList} (${gives.length} Fig.)\n🔸 ${partnerName} me envía: ${receivesList} (${receives.length} Fig.)\n\nGenerado en figuritaz.web.app`;
+    const givesList = gives.join(', ') || t.none;
+    const receivesList = receives.join(', ') || t.none;
+    const summaryText = t.perfectMatchSummary
+      .replaceAll('{partner}', partnerName)
+      .replace('{gives}', givesList)
+      .replace('{nGive}', gives.length)
+      .replace('{receives}', receivesList)
+      .replace('{nReceive}', receives.length);
 
     try {
       await navigator.clipboard.writeText(summaryText);
@@ -309,17 +489,13 @@ function Dashboard({
                 </div>
               </div>
               <p className="text-xs text-text-dim leading-relaxed">
-                {lang === 'pt' 
-                  ? 'Você foi convidado para uma troca automática! Clique no ícone de engrenagem no topo direito para fazer login com o Google e descobrir o Match Perfeito instantaneamente.' 
-                  : lang === 'en' 
-                  ? 'You were invited to an automatic trade! Click the settings gear icon at the top right to log in with Google and reveal the Perfect Match instantly.' 
-                  : '¡Fuiste invitado a un intercambio automático! Haz clic en el engranaje de configuración arriba a la derecha para iniciar sesión con Google y descubrir tu Match Perfecto.'}
+                {t.tradeInvitationHint}
               </p>
             </div>
           ) : !tradePartnerData ? (
             <div className="flex items-center gap-3 py-2">
               <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-secondary"></div>
-              <span className="text-xs font-bold text-text-dim uppercase tracking-widest">Carregando Match de Trocas...</span>
+              <span className="text-xs font-bold text-text-dim uppercase tracking-widest">{t.loadingTradeMatch}</span>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -390,6 +566,17 @@ function Dashboard({
         </div>
       </div>
 
+      {/* Cloud Trade Button below Visão Tática */}
+      <div className="w-full flex justify-center">
+        <button 
+          onClick={() => setIsCloudTradeModalOpen(true)}
+          className="w-full py-4 bg-gradient-to-r from-secondary/20 to-primary/20 hover:from-secondary/30 hover:to-primary/30 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg"
+        >
+          <Repeat size={16} className="text-secondary animate-pulse" />
+          {t.cloudSwapLink}
+        </button>
+      </div>
+
       {/* Grid of Tactical Metrics & Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece shadow-md border-white/5">
@@ -439,7 +626,7 @@ function Dashboard({
 
         {/* Wishlist Button */}
         <button 
-          onClick={handleShareWishlist}
+          onClick={() => setIsWishlistModalOpen(true)}
           className="glass-card p-4 flex flex-col items-center justify-center gap-2 hover:border-accent transition-all active:scale-[0.98] group min-h-[110px]"
         >
           <div className={`p-3 rounded-full transition-colors ${copiedWishlist ? 'bg-green-500/20' : 'bg-accent/20 group-hover:bg-accent/30'}`}>
@@ -500,11 +687,11 @@ function Dashboard({
           <div className="space-y-1.5 pt-3 border-t border-white/5">
             <div className="flex justify-between items-center">
               <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.toBuyEst}</span>
-              <span className="text-[11px] font-black text-secondary">+{estimate.remaining} {t.packetsDim}</span>
+              <span className="text-[11px] font-black text-secondary">+{remainingPacks} {t.packetsDim}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.finalProjection}</span>
-              <span className="text-[11px] font-black text-text-color">{packets + estimate.remaining} {t.packetsNormal}</span>
+              <span className="text-[11px] font-black text-text-color">{packets + remainingPacks} {t.packetsNormal}</span>
             </div>
           </div>
         </div>
@@ -530,15 +717,205 @@ function Dashboard({
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.finalTotalCost}</span>
-              <span className="text-[11px] font-black text-text-color">{currencySymbol} {(packets * (settings?.packetPrice || 4.00) + remainingCost).toFixed(2)}</span>
+              <span className="text-[11px] font-black text-text-color">{currencySymbol} {totalCost.toFixed(2)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <p className="text-xs font-black text-text-dim uppercase text-center tracking-widest opacity-60">
-        {t.estimateHint}
-      </p>
+      {/* Central de Economia Tática (Scientific Financial Simulator) */}
+      <div className="glass-card p-5 border border-white/5 relative overflow-hidden group shadow-lg bg-gradient-to-b from-white/5 to-transparent rounded-3xl">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-sm font-black text-text-color uppercase tracking-wider flex items-center gap-2">
+              <Calculator className="text-primary animate-pulse" size={16} />
+              {t.scientificFinanceTitle}
+            </h3>
+            <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-0.5">
+              {t.scientificFinanceSubtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Strategy Buttons */}
+        <div className="grid grid-cols-2 gap-2 p-1 bg-black/20 rounded-2xl border border-white/5 mb-4">
+          <button
+            onClick={() => setFinanceStrategy('ccp')}
+            className={`py-2 px-1 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all ${
+              financeStrategy === 'ccp' ? 'bg-primary text-white shadow-md font-bold' : 'text-text-dim hover:text-text-color'
+            }`}
+          >
+            {t.strategyCCP}
+          </button>
+          <button
+            onClick={() => setFinanceStrategy('coop')}
+            className={`py-2 px-1 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all ${
+              financeStrategy === 'coop' ? 'bg-secondary text-white shadow-md font-bold' : 'text-text-dim hover:text-text-color'
+            }`}
+          >
+            {t.strategyCoop}
+          </button>
+        </div>
+
+        {/* Dynamic Controls based on selected Strategy */}
+        <div className="mb-4">
+          {financeStrategy === 'coop' && (
+            <div className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
+              <span className="text-[10px] font-black text-text-dim uppercase tracking-wider">
+                {t.groupSize}:
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFinanceGroupSize(prev => Math.max(2, prev - 1))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 text-text-color font-bold text-xs"
+                >
+                  -
+                </button>
+                <span className="text-xs font-black text-text-color min-w-[70px] text-center">
+                  {financeGroupSize} {t.people}
+                </span>
+                <button
+                  onClick={() => setFinanceGroupSize(prev => Math.min(10, prev + 1))}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 text-text-color font-bold text-xs"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Scientific Explanation block */}
+        <div className="p-3 bg-black/20 rounded-xl border border-white/5 flex gap-2.5 items-start mb-4">
+          <Info size={14} className="text-primary shrink-0 mt-0.5" />
+          <p className="text-[10px] text-text-dim font-bold leading-normal uppercase">
+            {financeStrategy === 'ccp' && t.ccpExplanation}
+            {financeStrategy === 'coop' && t.coopExplanation}
+          </p>
+        </div>
+
+        {/* Savings Metric (If any) */}
+        {financeStrategy !== 'ccp' && savings > 0 && (
+          <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl flex justify-between items-center animate-fade-in">
+            <span className="text-[10px] font-black text-primary uppercase tracking-wider flex items-center gap-1">
+              <TrendingUp size={12} />
+              {t.economy}:
+            </span>
+            <span className="text-xs font-black text-primary">
+              {currencySymbol} {savings.toFixed(2)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Wishlist Modal */}
+      <AnimatePresence>
+        {isWishlistModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-lg p-6 space-y-6 max-h-[85vh] flex flex-col"
+              style={{ backgroundColor: 'var(--board-bg)' }}
+            >
+              <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-text-color uppercase tracking-tight">
+                  <ClipboardList size={20} className="text-accent" />
+                  {t.wishlist}
+                </h2>
+                <button onClick={() => setIsWishlistModalOpen(false)} className="p-1 hover:bg-white/10 rounded-full text-text-color">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 space-y-6 scrollbar-hide">
+                {/* Formatted list option */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                    <span>✨</span> Lista Formatada (Com Bandeiras)
+                  </h3>
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-4 text-[10px] font-mono text-text-color whitespace-pre-wrap max-h-[200px] overflow-y-auto scrollbar-hide">
+                    {getFormattedWishlistText()}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(getFormattedWishlistText());
+                        alert(t.copySuccess);
+                      }}
+                      className="flex-1 py-2.5 bg-primary hover:bg-primary/95 text-white rounded-xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
+                    >
+                      Copiar
+                    </button>
+                    {navigator.share && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await navigator.share({
+                              title: 'Minha Lista de Faltantes',
+                              text: getFormattedWishlistText()
+                            });
+                          } catch (err) {
+                            console.log(err);
+                          }
+                        }}
+                        className="py-2.5 px-4 bg-white/10 text-text-color hover:bg-white/20 rounded-xl text-xs font-black uppercase active:scale-95 transition-all"
+                      >
+                        Compartilhar
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Simple list option */}
+                <div className="space-y-3 pt-4 border-t border-white/5">
+                  <h3 className="text-xs font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                    <span>📄</span> Lista Simples (Códigos)
+                  </h3>
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-4 text-[10px] font-mono text-text-dim max-h-[120px] overflow-y-auto scrollbar-hide break-all">
+                    {ALL_VALID_CODES.filter(code => !collection[code] || collection[code].status !== 'collected').join(', ')}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const simpleText = ALL_VALID_CODES.filter(code => !collection[code] || collection[code].status !== 'collected').join(', ');
+                        navigator.clipboard.writeText(`${t.wishlistTitle}\n\n${simpleText}`);
+                        alert(t.copySuccess);
+                      }}
+                      className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-text-color rounded-xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all border border-white/10"
+                    >
+                      Copiar
+                    </button>
+                    {navigator.share && (
+                      <button
+                        onClick={async () => {
+                          const simpleText = ALL_VALID_CODES.filter(code => !collection[code] || collection[code].status !== 'collected').join(', ');
+                          try {
+                            await navigator.share({
+                              title: 'Minha Lista de Faltantes',
+                              text: `${t.wishlistTitle}\n\n${simpleText}`
+                            });
+                          } catch (err) {
+                            console.log(err);
+                          }
+                        }}
+                        className="py-2.5 px-4 bg-white/5 text-text-dim hover:bg-white/10 rounded-xl text-xs font-black uppercase active:scale-95 transition-all"
+                      >
+                        Compartilhar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Comparison Modal */}
       <AnimatePresence>
@@ -683,7 +1060,7 @@ function Dashboard({
                         onClick={() => setAnalysis(null)}
                         className="w-full bg-white/10 py-3 rounded-xl font-bold hover:bg-white/20 transition-all text-text-color"
                       >
-                        Nova Análise
+                        {t.newAnalysis}
                       </button>
                     </>
                   )}
@@ -723,7 +1100,7 @@ function Dashboard({
                 {repeatedStickers.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
                     <Repeat size={48} className="text-text-dim opacity-20" />
-                    <p className="text-text-dim font-bold">{lang === 'pt' ? 'Nenhuma figurinha repetida' : lang === 'en' ? 'No duplicate stickers' : 'Sin figuritas repetidas'}</p>
+                    <p className="text-text-dim font-bold">{t.noRepeatedStickers}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-6 pb-6 px-1">
@@ -785,12 +1162,23 @@ function Dashboard({
                 )}
               </div>
               
-              <button 
-                onClick={() => setIsRepeatedOpen(false)}
-                className="w-full bg-white/5 py-4 rounded-xl font-black text-text-color hover:bg-white/10 transition-all uppercase tracking-widest text-xs"
-              >
-                {t.close}
-              </button>
+              <div className="flex gap-3">
+                {repeatedStickers.length > 0 && (
+                  <button 
+                    onClick={handleClearAllRepeated}
+                    className="flex-1 bg-rose-500/10 border border-rose-500/20 py-4 rounded-xl font-black text-rose-400 hover:bg-rose-500/20 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={14} />
+                    {t.clearAllRepeated || 'Apagar Todas'}
+                  </button>
+                )}
+                <button 
+                  onClick={() => setIsRepeatedOpen(false)}
+                  className={`flex-1 bg-white/5 py-4 rounded-xl font-black text-text-color hover:bg-white/10 transition-all uppercase tracking-widest text-xs ${repeatedStickers.length === 0 ? 'w-full' : ''}`}
+                >
+                  {t.close}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -856,7 +1244,7 @@ function Dashboard({
                 </div>
 
                 <div className="relative z-10 space-y-0">
-                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em] drop-shadow-lg leading-none">Progresso do Álbum</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em] drop-shadow-lg leading-none">{t.albumProgress}</span>
                   <div className="relative inline-block">
                     <h2 className="text-7xl font-black text-white tracking-tighter drop-shadow-[0_10px_30px_rgba(16,185,129,0.3)]">
                       {stats.porcentagem}%
@@ -892,7 +1280,7 @@ function Dashboard({
                     {teamData.completeCount > 0 ? (
                       <>
                         <p className="text-[9px] font-black text-secondary uppercase tracking-widest mb-1 leading-tight">
-                          {lang === 'pt' ? 'Seleções Completas' : 'Completed Teams'}
+                          {t.completedTeams}
                         </p>
                         <p className="text-sm font-black text-white truncate leading-tight mt-1">Total</p>
                         <div className="flex items-baseline gap-1 mt-1">
@@ -903,7 +1291,7 @@ function Dashboard({
                     ) : (
                       <>
                         <p className="text-[9px] font-black text-secondary uppercase tracking-widest mb-1 leading-tight">{t.topTeam}</p>
-                        <p className="text-sm font-black text-white truncate leading-tight mt-1">{teamData.best.name}</p>
+                        <p className="text-sm font-black text-white truncate leading-tight mt-1">{t.countries?.[teamData.best.id] || teamData.best.name}</p>
                         <div className="flex items-baseline gap-1 mt-1">
                           <p className="text-2xl font-black text-white">{teamData.best.collected}</p>
                           <p className="text-[13px] font-bold text-white/30">/ {teamData.best.total}</p>
@@ -967,7 +1355,7 @@ function Dashboard({
 
                 <div className="relative z-10 flex flex-col items-center gap-1 mt-1 pt-1 border-t border-white/10 w-full">
                   <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">
-                    Crie o seu resumo em:
+                    {t.createSummaryAt}
                   </p>
                   <p className="text-sm font-black text-white tracking-widest">
                     figuritaz.web.app
@@ -1080,7 +1468,7 @@ function Dashboard({
                   ) : (
                     <>
                       <Share2 size={14} />
-                      {lang === 'pt' ? 'Copiar Resumo da Troca 📱' : lang === 'en' ? 'Copy Swap Summary' : 'Copiar Resumen'}
+                      {t.copyTradeSummary}
                     </>
                   )}
                 </button>
@@ -1096,119 +1484,198 @@ function Dashboard({
         )}
       </AnimatePresence>
 
-      {/* Share Duplicates and Cloud Trade Modal */}
+      {/* Share Duplicates Modal */}
       <AnimatePresence>
         {isShareModalOpen && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/85 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="glass-card w-full max-w-sm p-6 space-y-6 max-h-[90vh] flex flex-col border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-y-auto scrollbar-hide animate-fade-in"
+              className="glass-card w-full max-w-lg p-6 space-y-6 max-h-[85vh] flex flex-col"
               style={{ backgroundColor: 'var(--board-bg)' }}
             >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
+              <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-text-color uppercase tracking-tight">
                   <Share2 size={20} className="text-primary" />
-                  <h2 className="text-xl font-black text-text-color uppercase tracking-tight">
-                    {lang === 'pt' ? 'Compartilhar' : lang === 'en' ? 'Share' : 'Compartir'}
-                  </h2>
-                </div>
-                <button 
-                  onClick={() => setIsShareModalOpen(false)} 
-                  className="p-1 hover:bg-white/10 rounded-full text-text-color transition-colors active:scale-90"
-                >
+                  {lang === 'pt' ? 'COMPARTILHAR REPETIDAS' : t.share}
+                </h2>
+                <button onClick={() => setIsShareModalOpen(false)} className="p-1 hover:bg-white/10 rounded-full text-text-color">
                   <X size={20} />
                 </button>
               </div>
 
-              {/* Cloud Trading Section */}
-              <div className="space-y-4">
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3 flex flex-col items-center text-center">
-                  <div className="bg-secondary/20 p-2.5 rounded-full border border-secondary/30">
-                    <Repeat className="text-secondary" size={20} />
-                  </div>
-                  <h3 className="text-xs font-black text-white uppercase tracking-widest leading-none">
-                    {lang === 'pt' ? 'Troca Automática em Nuvem 🤝' : lang === 'en' ? 'Cloud Swap Link' : 'Enlace en la Nube'}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-6 scrollbar-hide">
+                {/* Formatted list option */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                    <span>✨</span> Lista Formatada (Com Bandeiras)
                   </h3>
-                  
-                  {!user ? (
-                    <p className="text-[10px] text-text-dim leading-relaxed">
-                      {lang === 'pt' 
-                        ? 'Faça login com o Google para habilitar seu QR Code e Link de Troca em tempo real!' 
-                        : lang === 'en' 
-                        ? 'Sign in with Google to enable your custom QR Code and real-time Trade Link!' 
-                        : '¡Inicia sesión con Google para activar tu QR Code y Enlace en tiempo real!'}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-[10px] text-text-dim leading-relaxed max-w-[240px]">
-                        {lang === 'pt' 
-                          ? 'Seu amigo verá quais figurinhas vocês podem trocar de forma instantânea!' 
-                          : lang === 'en' 
-                          ? 'Your friend will instantly see which stickers you can swap!' 
-                          : '¡Tu amigo verá al instante qué figuritas pueden intercambiar!'}
-                      </p>
-
-                      {/* QR Code Container */}
-                      <div className="relative p-3 bg-white rounded-2xl shadow-[0_0_20px_rgba(6,182,212,0.15)] border-2 border-primary/20 scale-95 transition-transform hover:scale-100 duration-300">
-                        <img 
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${window.location.origin}/?trade=${user.uid}`)}`} 
-                          alt="Trade QR Code" 
-                          className="w-[150px] h-[150px]"
-                        />
-                      </div>
-
-                      {/* Copy Link Button */}
-                      <button 
-                        onClick={handleCopyTradeLink}
-                        className="w-full bg-secondary hover:bg-secondary/90 text-white font-black text-[10px] uppercase tracking-widest py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5"
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-4 text-[10px] font-mono text-text-color whitespace-pre-wrap max-h-[200px] overflow-y-auto scrollbar-hide">
+                    {getFormattedRepeatedText()}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(getFormattedRepeatedText());
+                        alert(t.copySuccess);
+                      }}
+                      className="flex-1 py-2.5 bg-primary hover:bg-primary/95 text-white rounded-xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
+                    >
+                      Copiar
+                    </button>
+                    {navigator.share && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await navigator.share({
+                              title: 'Minhas Repetidas',
+                              text: getFormattedRepeatedText()
+                            });
+                          } catch (err) {
+                            console.log(err);
+                          }
+                        }}
+                        className="py-2.5 px-4 bg-white/10 text-text-color hover:bg-white/20 rounded-xl text-xs font-black uppercase active:scale-95 transition-all"
                       >
-                        {copiedTradeLink ? (
-                          <>
-                            <Check size={12} />
-                            {t.tradeLinkCopied}
-                          </>
-                        ) : (
-                          <>
-                            <ExternalLink size={12} />
-                            {t.shareTradeLink}
-                          </>
-                        )}
+                        Compartilhar
                       </button>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                {/* Plain Text Section */}
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex flex-col gap-2.5">
-                  <h4 className="text-[10px] font-black text-text-dim uppercase tracking-widest">
-                    {lang === 'pt' ? 'Outras Opções' : lang === 'en' ? 'Other Options' : 'Otras Opciones'}
-                  </h4>
-                  <button 
-                    onClick={async () => {
-                      await handleCopyTextList();
-                      setIsShareModalOpen(false);
-                    }}
-                    className="w-full bg-white/5 hover:bg-white/10 text-text-color font-black text-[10px] uppercase tracking-widest py-3 rounded-xl transition-all border border-white/5 active:scale-[0.98] flex items-center justify-center gap-1.5"
-                  >
-                    <ClipboardList size={12} className="text-primary" />
-                    {lang === 'pt' ? 'Copiar Lista de Repetidas (Texto)' : lang === 'en' ? 'Copy Duplicates List (Text)' : 'Copy Duplicates List'}
-                  </button>
+                {/* Simple list option */}
+                <div className="space-y-3 pt-4 border-t border-white/5">
+                  <h3 className="text-xs font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                    <span>📄</span> Lista Simples (Códigos)
+                  </h3>
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-4 text-[10px] font-mono text-text-dim max-h-[120px] overflow-y-auto scrollbar-hide break-all">
+                    {ALL_VALID_CODES.filter(code => collection[code]?.repeated > 0).map(code => {
+                      const data = collection[code];
+                      return `${code}${data.repeated > 1 ? ` (x${data.repeated})` : ''}`;
+                    }).join(', ')}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const simpleText = ALL_VALID_CODES.filter(code => collection[code]?.repeated > 0).map(code => {
+                          const data = collection[code];
+                          return `${code}${data.repeated > 1 ? ` (x${data.repeated})` : ''}`;
+                        }).join(', ');
+                        navigator.clipboard.writeText(`${t.shareTitle}\n\n${simpleText}`);
+                        alert(t.copySuccess);
+                      }}
+                      className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-text-color rounded-xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all border border-white/10"
+                    >
+                      Copiar
+                    </button>
+                    {navigator.share && (
+                      <button
+                        onClick={async () => {
+                          const simpleText = ALL_VALID_CODES.filter(code => collection[code]?.repeated > 0).map(code => {
+                            const data = collection[code];
+                            return `${code}${data.repeated > 1 ? ` (x${data.repeated})` : ''}`;
+                          }).join(', ');
+                          try {
+                            await navigator.share({
+                              title: 'Minhas Repetidas',
+                              text: `${t.shareTitle}\n\n${simpleText}`
+                            });
+                          } catch (err) {
+                            console.log(err);
+                          }
+                        }}
+                        className="py-2.5 px-4 bg-white/5 text-text-dim hover:bg-white/10 rounded-xl text-xs font-black uppercase active:scale-95 transition-all"
+                      >
+                        Compartilhar
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              {/* Close Button */}
+      {/* Cloud Trade Modal */}
+      <AnimatePresence>
+        {isCloudTradeModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-sm p-6 space-y-6 max-h-[90vh] flex flex-col items-center text-center relative overflow-hidden"
+              style={{ backgroundColor: 'var(--board-bg)' }}
+            >
               <button 
-                onClick={() => setIsShareModalOpen(false)}
-                className="w-full bg-white/5 hover:bg-white/10 py-3.5 rounded-xl font-black text-[11px] text-text-dim uppercase tracking-widest transition-all active:scale-[0.98]"
+                onClick={() => setIsCloudTradeModalOpen(false)}
+                className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full text-text-color transition-colors active:scale-90"
               >
-                {t.close}
+                <X size={20} />
               </button>
+
+              <div className="bg-secondary/20 p-4 rounded-full border border-secondary/30 mt-4">
+                <Repeat className="text-secondary animate-pulse" size={28} />
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-lg font-black text-white uppercase tracking-wider">
+                  {lang === 'pt' ? 'TROCA AUTOMÁTICA EM NUVEM' : t.cloudSwapLink}
+                </h2>
+                <p className="text-[10px] text-text-dim px-4 leading-relaxed font-bold uppercase">
+                  {lang === 'pt' ? 'Seu amigo verá quais figurinhas vocês podem trocar de forma instantânea!' : t.cloudSwapFriendDesc}
+                </p>
+              </div>
+
+              {!user ? (
+                <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4 space-y-3 w-full">
+                  <p className="text-[10px] font-medium text-text-dim leading-relaxed">
+                    {t.cloudSwapLoginDesc}
+                  </p>
+                  <p className="text-[10px] font-black text-accent uppercase tracking-widest">
+                    {lang === 'pt' ? 'Faça login pelo menu de Configurações' : 'Please log in via Settings'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* QR Code Container */}
+                  <div className="relative p-3 bg-white rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.3)] border-2 border-secondary/30 transition-transform duration-300">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${window.location.origin}/?trade=${user.uid}`)}`} 
+                      alt="Trade QR Code" 
+                      className="w-[160px] h-[160px]"
+                    />
+                  </div>
+
+                  {/* Copy Link Button */}
+                  <button 
+                    onClick={handleCopyTradeLink}
+                    className="w-full bg-secondary hover:bg-secondary/90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5"
+                  >
+                    {copiedTradeLink ? (
+                      <>
+                        <Check size={14} />
+                        {t.tradeLinkCopied}
+                      </>
+                    ) : (
+                      <>
+                        <ExternalLink size={14} />
+                        {lang === 'pt' ? 'LINK DE TROCA 🤝' : t.shareTradeLink}
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}

@@ -151,13 +151,7 @@ function App() {
       if (data.canGoBack) {
         window.history.back();
       } else {
-        const confirmExit = window.confirm(
-          settings.lang === 'pt'
-            ? 'Deseja realmente sair do FiguritaZ?'
-            : settings.lang === 'es'
-            ? '¿Realmente deseas salir de FiguritaZ?'
-            : 'Do you really want to exit FiguritaZ?'
-        );
+        const confirmExit = window.confirm(t.exitConfirm);
         if (confirmExit) {
           CapApp.exitApp();
         }
@@ -304,22 +298,28 @@ function App() {
     
     const unsub = onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
+        // Ignore snapshots with pending writes (local changes not yet confirmed by the server)
+        if (snapshot.metadata.hasPendingWrites) return;
+
         const data = snapshot.data();
         
-        // Only update local state if data is different
-        if (data.collection && initialLoad) {
+        if (data.collection) {
           setCollection(data.collection);
-          if (data.settings) setSettings(data.settings);
-          if (data.packets !== undefined) setPackets(data.packets);
-          if (data.unlockedAchievements) {
-            setUnlockedAchievements(prev => {
-              const merged = Array.from(new Set([...prev, ...data.unlockedAchievements]));
-              localStorage.setItem('unlocked_achievements', JSON.stringify(merged));
-              return merged;
-            });
-          }
-          initialLoad = false;
         }
+        if (data.settings) {
+          setSettings(data.settings);
+        }
+        if (data.packets !== undefined) {
+          setPackets(data.packets);
+        }
+        if (data.unlockedAchievements) {
+          setUnlockedAchievements(prev => {
+            const merged = Array.from(new Set([...prev, ...data.unlockedAchievements]));
+            localStorage.setItem('unlocked_achievements', JSON.stringify(merged));
+            return merged;
+          });
+        }
+        initialLoad = false;
       } else if (initialLoad) {
         // First time login ever! Upload what we have
         setDoc(userRef, {
@@ -675,7 +675,7 @@ function App() {
               <div className="pt-4 border-t border-white/10 space-y-4">
                 <label className="text-xs font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
                   <Globe size={14} />
-                  Sincronização em Nuvem
+                  {t.cloudSync}
                 </label>
                 
                 {user ? (
@@ -689,27 +689,27 @@ function App() {
                       <button 
                         onClick={handleLogout}
                         className="p-2 hover:bg-accent/10 text-accent rounded-lg transition-colors"
-                        title="Sair"
+                        title={t.logout}
                       >
                         <LogOut size={18} />
                       </button>
                     </div>
                     <p className="text-[9px] text-center text-text-dim italic">
-                      Seus dados estão protegidos e sincronizados.
+                      {t.cloudSyncSuccessHint}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4 space-y-3">
                       <p className="text-[10px] font-medium text-text-dim leading-relaxed">
-                        Seu progresso está sendo salvo apenas neste dispositivo. Entre com o Google para salvar na nuvem e acessar de qualquer lugar.
+                        {t.cloudSyncLoginHint}
                       </p>
                       <button 
                         onClick={handleLogin}
                         className="w-full py-3 bg-white text-black rounded-xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2"
                       >
                         <User size={16} />
-                        Entrar com Google
+                        {t.login}
                       </button>
                       {authError && (
                         <p className="text-[9px] text-accent text-center font-bold">Erro: {authError}</p>
@@ -779,16 +779,16 @@ function App() {
               <div className="pt-6 border-t border-white/10 space-y-4">
                 <div className="flex items-center gap-2 text-primary">
                   <Heart size={18} fill="currentColor" />
-                  <h3 className="font-black uppercase tracking-tight text-sm">Apoie o Projeto</h3>
+                  <h3 className="font-black uppercase tracking-tight text-sm">{t.supportProject}</h3>
                 </div>
                 <p className="text-[10px] font-medium text-text-dim leading-relaxed">
-                  Gostou do FiguritaZ? Sua contribuição ajuda a manter o servidor online e a desenvolver novas funções táticas!
+                  {t.supportDescription}
                 </p>
                 
                 {settings.country === 'BR' ? (
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">Pague via PIX</span>
+                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">{t.payViaPix}</span>
                       <Coffee size={16} className="text-primary" />
                     </div>
                     <div className="bg-black/20 p-3 rounded-xl break-all">
@@ -797,17 +797,17 @@ function App() {
                     <button 
                       onClick={() => {
                         navigator.clipboard.writeText('54e4b9ff-cff0-4aa3-be5b-cfa9bd4800c9');
-                        alert('Chave PIX copiada!');
+                        alert(t.pixCopied);
                       }}
                       className="w-full py-2 bg-primary text-white rounded-lg text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
                     >
-                      Copiar Chave PIX
+                      {t.copyPixKey}
                     </button>
                   </div>
                 ) : (
                   <div className="bg-[#004481]/10 border border-[#004481]/20 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-[#004481] uppercase tracking-widest">Transferencia CLABE (BBVA)</span>
+                      <span className="text-[10px] font-black text-[#004481] uppercase tracking-widest">{t.payViaClabe}</span>
                       <Coffee size={16} className="text-[#004481]" />
                     </div>
                     <div className="space-y-1">
@@ -819,11 +819,11 @@ function App() {
                     <button 
                       onClick={() => {
                         navigator.clipboard.writeText('012225015122793574');
-                        alert('CLABE copiada!');
+                        alert(t.clabeCopied);
                       }}
                       className="w-full py-2 bg-[#004481] text-white rounded-lg text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
                     >
-                      Copiar CLABE
+                      {t.copyClabe}
                     </button>
                   </div>
                 )}

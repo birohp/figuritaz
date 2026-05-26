@@ -84,7 +84,7 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
           <div className="space-y-2">
             <h1 className="text-3xl font-black text-text-color tracking-tight uppercase">{t.achievements}</h1>
             <p className="text-text-dim text-sm font-medium leading-relaxed">
-              {lang === 'pt' ? 'Sua jornada tática e conquistas como colecionador.' : lang === 'en' ? 'Your tactical journey and achievements as a collector.' : 'Tu viaje táctico y logros como coleccionador.'}
+              {t.achievementsSubtitle}
             </p>
           </div>
         </div>
@@ -96,7 +96,7 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
               <div className="p-2 bg-primary/20 rounded-lg">
                 <Trophy size={18} className="text-primary" />
               </div>
-              <span className="text-sm font-black text-text-color uppercase tracking-tight">Progreso General</span>
+              <span className="text-sm font-black text-text-color uppercase tracking-tight">{t.generalProgress}</span>
             </div>
             <span className="text-lg font-black text-primary">
               {unlockedAchievements.size} / {ACHIEVEMENTS.length}
@@ -113,10 +113,10 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
             </div>
             <div className="flex justify-between items-center px-1">
               <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">
-                Estatus de la Carrera
+                {t.careerStatus}
               </p>
               <p className="text-[10px] font-black text-text-color uppercase">
-                {Math.floor((unlockedAchievements.size / ACHIEVEMENTS.length) * 100)}% Completado
+                {Math.floor((unlockedAchievements.size / ACHIEVEMENTS.length) * 100)}% {t.completed}
               </p>
             </div>
           </div>
@@ -151,7 +151,7 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
         <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
           <Award size={64} className="text-text-dim opacity-20" />
           <p className="text-text-dim font-bold max-w-[200px]">
-            {lang === 'pt' ? 'Comece sua coleção para ganhar suas primeiras medalhas!' : lang === 'en' ? 'Start your collection to earn your first medals!' : '¡Comienza tu colección para ganar tus primeras medallas!'}
+            {t.startCollectionMedals}
           </p>
         </div>
       )}
@@ -323,10 +323,10 @@ function AchievementCard({ ach, isUnlocked, Icon, prog, percent, t, lang, device
         {/* Float Layer: Title and Description Texts (Z: 22px) */}
         <div className="space-y-1 w-full flex-1 flex flex-col justify-center" style={{ transform: 'translateZ(22px)' }}>
           <h3 className={`font-black uppercase tracking-tight text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)] ${isUnlocked ? 'text-yellow-400' : 'text-text-dim'}`}>
-            {ach.name}
+            {t.achievementsData[ach.id]?.name || ach.name}
           </h3>
           <p className="text-[10px] font-bold text-text-dim leading-tight">
-            {ach.description}
+            {t.achievementsData[ach.id]?.desc || ach.description}
           </p>
         </div>
 
@@ -336,12 +336,12 @@ function AchievementCard({ ach, isUnlocked, Icon, prog, percent, t, lang, device
             <div 
               className="bg-yellow-400/20 text-yellow-500 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-yellow-400/30 shadow-[0_4px_12px_rgba(234,179,8,0.15)] inline-block"
             >
-              {lang === 'pt' ? 'Desbloqueado' : lang === 'en' ? 'Unlocked' : 'Desbloqueado'}
+              {t.achievementUnlockedLabel}
             </div>
           ) : (
             <div className="space-y-1.5" style={{ transform: 'translateZ(5px)' }}>
               <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-text-dim opacity-70">
-                <span>Progresso</span>
+                <span>{t.progressLabel}</span>
                 <span>{prog.isPercent ? `${prog.current}%` : prog.current} / {prog.isPercent ? `${prog.target}%` : prog.target}</span>
               </div>
               <div className="h-1.5 bg-black/20 rounded-full overflow-hidden border border-white/5">

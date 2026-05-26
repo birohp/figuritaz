@@ -38,9 +38,14 @@ function Stats({ collection, lang = 'pt', settings }) {
     return { name: groupName, collected, total, percent, flags };
   });
 
-  // Filter 1: Actual Teams (Those in lettered groups like "Grupo A" to "Grupo L")
+  // Count how many teams are 100% completed
+  const completedTeamsCount = categoryStats
+    .filter(s => s.group.startsWith('Grupo') && s.percent === 100)
+    .length;
+
+  // Filter 1: Actual Teams (Those in lettered groups like "Grupo A" to "Grupo L") that are not 100% complete
   const topTeams = categoryStats
-    .filter(s => s.group.startsWith('Grupo') && s.collected > 0)
+    .filter(s => s.group.startsWith('Grupo') && s.collected > 0 && s.percent < 100)
     .sort((a, b) => b.percent - a.percent)
     .slice(0, 3);
 
@@ -71,7 +76,7 @@ function Stats({ collection, lang = 'pt', settings }) {
           <div className="relative z-10 space-y-4">
             <div className="flex justify-between items-end">
               <div>
-                <p className="text-xs font-black text-text-color uppercase tracking-widest mb-1">Status da Elite</p>
+                <p className="text-xs font-black text-text-color uppercase tracking-widest mb-1">{t.eliteStatus}</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-black text-text-color">{stats.coladasBrilhantes}</span>
                   <span className="text-xl font-bold text-text-dim opacity-50">/ {stats.totalBrilhantes}</span>
@@ -92,7 +97,7 @@ function Stats({ collection, lang = 'pt', settings }) {
             </div>
             
             <p className="text-[9px] font-bold text-text-dim uppercase text-center tracking-tighter opacity-70">
-              {lang === 'pt' ? 'Inclui todos os FWC e os nº 1 de cada país' : lang === 'en' ? 'Includes all FWC and #1 from each country' : 'Incluye todos los FWC y los nº 1 de cada país'}
+              {t.shinyDescription}
             </p>
           </div>
         </div>
@@ -133,7 +138,9 @@ function Stats({ collection, lang = 'pt', settings }) {
                   
                   <div className="flex-1 min-w-0 pr-4">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">{group.name}</h3>
+                      <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">
+                        {group.name.startsWith('Grupo ') ? group.name.replace('Grupo ', (t.groupLabel || 'Grupo') + ' ') : group.name}
+                      </h3>
                       <span className="text-[12px] font-black text-primary shrink-0">{group.percent.toFixed(0)}%</span>
                     </div>
                     <div className="w-full h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
@@ -158,7 +165,13 @@ function Stats({ collection, lang = 'pt', settings }) {
         <section className="space-y-3">
           <h2 className="text-lg font-black text-text-color flex items-center gap-2 uppercase tracking-tight">
             <Trophy className="text-secondary" size={18} />
-            {t.topTeams}
+            <span>{t.topTeams}</span>
+            {completedTeamsCount > 0 && (
+              <span className="bg-green-500/10 text-green-500 border border-green-500/20 px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider flex items-center gap-1 normal-case">
+                <CheckCircle size={10} className="shrink-0" />
+                {completedTeamsCount} {lang === 'pt' ? 'com' : lang === 'es' ? 'con' : 'with'} 100%
+              </span>
+            )}
           </h2>
           <div className="space-y-2">
             {topTeams.map(team => (
@@ -169,12 +182,12 @@ function Stats({ collection, lang = 'pt', settings }) {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-8 rounded-lg bg-surface-color overflow-hidden flex items-center justify-center border border-surface-border shadow-inner shrink-0">
                      {team.flag && (
-                       <img src={`https://flagcdn.com/w160/${team.flag}.png`} alt={team.name} className="w-full h-full object-cover" />
+                       <img src={`https://flagcdn.com/w160/${team.flag}.png`} alt={t.countries?.[team.id] || team.name} className="w-full h-full object-cover" />
                      )}
                   </div>
                   <div className="flex-1 min-w-0 pr-4">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-black text-text-color text-sm leading-tight truncate">{team.name}</h3>
+                      <h3 className="font-black text-text-color text-sm leading-tight truncate">{t.countries?.[team.id] || team.name}</h3>
                       <span className="text-[12px] font-black text-secondary shrink-0">{team.percent.toFixed(0)}%</span>
                     </div>
                     <div className="w-full h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
@@ -220,7 +233,7 @@ function Stats({ collection, lang = 'pt', settings }) {
                 </div>
                 <div className="flex-1 min-w-0 pr-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">{special.name}</h3>
+                    <h3 className="font-black text-text-color text-sm uppercase tracking-tight leading-tight truncate">{t.countries?.[special.id] || special.name}</h3>
                     <span className="text-[12px] font-black text-accent shrink-0">{special.percent.toFixed(0)}%</span>
                   </div>
                   <div className="w-full h-1 bg-black/20 rounded-full mt-1.5 overflow-hidden">
@@ -244,7 +257,7 @@ function Stats({ collection, lang = 'pt', settings }) {
       {topTeams.length === 0 && topGroups.length === 0 && specials.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
           <BarChart3 size={48} className="text-text-dim opacity-20" />
-          <p className="text-text-dim font-bold">Inicie sua coleção para ver estatísticas detalhadas.</p>
+          <p className="text-text-dim font-bold">{t.startCollectionStats}</p>
         </div>
       )}
     </div>

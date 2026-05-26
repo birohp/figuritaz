@@ -1,6 +1,9 @@
 import React from 'react';
+import { translations } from '../lib/translations';
 
 const AdBanner = ({ lang = 'pt' }) => {
+  const t = translations[lang] || translations.pt;
+
   return (
     <div className="mx-4 mt-6 mb-2">
       <div className="glass-card bg-black/40 border border-white/5 h-[90px] flex flex-col items-center justify-center relative overflow-hidden group">
@@ -10,10 +13,10 @@ const AdBanner = ({ lang = 'pt' }) => {
         
         {/* Placeholder Content */}
         <p className="text-[10px] font-black text-text-dim uppercase tracking-widest opacity-40 group-hover:opacity-60 transition-opacity">
-          {lang === 'pt' ? 'Espaço Publicitário AdMob' : lang === 'en' ? 'AdMob Advertising Space' : 'Espacio Publicitario AdMob'}
+          {t.adSpace}
         </p>
         <p className="text-[8px] font-bold text-text-dim opacity-20 mt-1 uppercase">
-          {lang === 'pt' ? 'Unit ID: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX' : 'Unit ID: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX'}
+          Unit ID: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
         </p>
         
         {/* Decorative elements to make it look "pro" even as placeholder */}

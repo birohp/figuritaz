@@ -3,12 +3,14 @@ import { ACHIEVEMENTS, getAchievements } from '../lib/stickers';
 import { Award, Footprints, User, Sparkles, Zap, Shield, Trophy, RefreshCcw, History, Flame, Target, Star, TrendingUp, Globe, Users, Share2, Download, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
+import { translations } from '../lib/translations';
 
 const IconMap = {
   Footprints, User, Award, Sparkles, Zap, Shield, Trophy, RefreshCcw, History, Flame, Target, Star, TrendingUp, Globe, UsersIcon: Users
 };
 
 const AchievementShare = ({ collection, lang = 'pt' }) => {
+  const t = translations[lang] || translations.pt;
   const [newAchievement, setNewAchievement] = useState(null);
   const [isSharing, setIsSharing] = useState(false);
   const cardRef = useRef(null);
@@ -61,11 +63,12 @@ const AchievementShare = ({ collection, lang = 'pt' }) => {
         scale: 2
       });
       canvas.toBlob(async (blob) => {
+        const achievementName = t.achievementsData[newAchievement.id]?.name || newAchievement.name;
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'achievement.png', { type: 'image/png' })] })) {
           await navigator.share({
             files: [new File([blob], 'achievement.png', { type: 'image/png' })],
-            title: 'Nova Conquista no FiguritaZ!',
-            text: `Acabei de desbloquear a conquista "${newAchievement.name}" no FiguritaZ! 🏆`
+            title: t.achievementUnlockedTitle,
+            text: t.achievementUnlockedText.replace('{n}', achievementName)
           });
         } else {
           handleDownload();
@@ -81,6 +84,8 @@ const AchievementShare = ({ collection, lang = 'pt' }) => {
   if (!newAchievement) return null;
 
   const Icon = IconMap[newAchievement.icon] || Award;
+  const localizedName = t.achievementsData[newAchievement.id]?.name || newAchievement.name;
+  const localizedDesc = t.achievementsData[newAchievement.id]?.desc || newAchievement.description;
 
   return (
     <AnimatePresence>
@@ -124,24 +129,24 @@ const AchievementShare = ({ collection, lang = 'pt' }) => {
             </div>
 
             <div className="space-y-2 relative z-10">
-              <span className="text-[10px] font-black text-yellow-400 uppercase tracking-[0.3em]">Conquista Desbloqueada</span>
+              <span className="text-[10px] font-black text-yellow-400 uppercase tracking-[0.3em]">{t.achievementUnlockedLabel}</span>
               <h2 className="text-3xl font-black text-white uppercase tracking-tight leading-none">
-                {newAchievement.name}
+                {localizedName}
               </h2>
               <p className="text-sm text-yellow-100/70 font-medium px-4">
-                {newAchievement.description}
+                {localizedDesc}
               </p>
             </div>
 
             <div className="w-full h-px bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent my-2" />
 
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Coleção Oficial</span>
+              <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">{t.officialCollection}</span>
               <div className="flex items-center gap-2">
                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center p-1">
                     <img src="/pwa-192x192.png" alt="Logo" className="w-full h-full object-contain" />
                  </div>
-                 <span className="text-xs font-black text-white uppercase">FiguritaZ 2024</span>
+                 <span className="text-xs font-black text-white uppercase">FiguritaZ</span>
               </div>
             </div>
           </div>
@@ -154,7 +159,7 @@ const AchievementShare = ({ collection, lang = 'pt' }) => {
               className="flex-1 bg-white text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl disabled:opacity-50"
             >
               <Share2 size={20} />
-              {lang === 'pt' ? 'COMPARTILHAR' : 'SHARE'}
+              {t.shareAction}
             </button>
             <button 
               onClick={handleDownload}
@@ -166,7 +171,7 @@ const AchievementShare = ({ collection, lang = 'pt' }) => {
           </div>
           
           <p className="mt-4 text-center text-white/40 text-[10px] font-bold uppercase tracking-widest">
-            {lang === 'pt' ? 'Toque fora para continuar colecionando' : 'Tap outside to continue collecting'}
+            {t.tapOutsideToContinue}
           </p>
         </motion.div>
       </div>

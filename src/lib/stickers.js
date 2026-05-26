@@ -21,7 +21,7 @@ export const CATEGORIES = [
   { id: 'costa_do_marfim', name: 'Costa do Marfim', group: 'Grupo E', flag: 'ci', stickers: ['CIV1', 'CIV2', 'CIV3', 'CIV4', 'CIV5', 'CIV6', 'CIV7', 'CIV8', 'CIV9', 'CIV10', 'CIV11', 'CIV12', 'CIV13', 'CIV14', 'CIV15', 'CIV16', 'CIV17', 'CIV18', 'CIV19', 'CIV20'] },
   { id: 'equador', name: 'Equador', group: 'Grupo E', flag: 'ec', stickers: ['ECU1', 'ECU2', 'ECU3', 'ECU4', 'ECU5', 'ECU6', 'ECU7', 'ECU8', 'ECU9', 'ECU10', 'ECU11', 'ECU12', 'ECU13', 'ECU14', 'ECU15', 'ECU16', 'ECU17', 'ECU18', 'ECU19', 'ECU20'] },
   { id: 'holanda', name: 'Holanda', group: 'Grupo F', flag: 'nl', stickers: ['NED1', 'NED2', 'NED3', 'NED4', 'NED5', 'NED6', 'NED7', 'NED8', 'NED9', 'NED10', 'NED11', 'NED12', 'NED13', 'NED14', 'NED15', 'NED16', 'NED17', 'NED18', 'NED19', 'NED20'] },
-  { id: 'japão', name: 'Japão', group: 'Grupo F', flag: 'jp', stickers: ['JPN1', 'JPN2', 'JPN3', 'JPN4', 'JPN5', 'JPN6', 'JPN7', 'JPN8', 'JPN9', 'JPN10', 'JPN11', 'JPN12', 'JPN13', 'JPN14', 'JPN15', 'JPN16', 'JPN17', 'JPN18', 'JPN19', 'RUBY20'] },
+  { id: 'japão', name: 'Japão', group: 'Grupo F', flag: 'jp', stickers: ['JPN1', 'JPN2', 'JPN3', 'JPN4', 'JPN5', 'JPN6', 'JPN7', 'JPN8', 'JPN9', 'JPN10', 'JPN11', 'JPN12', 'JPN13', 'JPN14', 'JPN15', 'JPN16', 'JPN17', 'JPN18', 'JPN19', 'JPN20'] },
   { id: 'suécia', name: 'Suécia', group: 'Grupo F', flag: 'se', stickers: ['SWE1', 'SWE2', 'SWE3', 'SWE4', 'SWE5', 'SWE6', 'SWE7', 'SWE8', 'SWE9', 'SWE10', 'SWE11', 'SWE12', 'SWE13', 'SWE14', 'SWE15', 'SWE16', 'SWE17', 'SWE18', 'SWE19', 'SWE20'] },
   { id: 'tunísia', name: 'Tunísia', group: 'Grupo F', flag: 'tn', stickers: ['TUN1', 'TUN2', 'TUN3', 'TUN4', 'TUN5', 'TUN6', 'TUN7', 'TUN8', 'TUN9', 'TUN10', 'TUN11', 'TUN12', 'TUN13', 'TUN14', 'TUN15', 'TUN16', 'TUN17', 'TUN18', 'TUN19', 'TUN20'] },
   { id: 'bélgica', name: 'Bélgica', group: 'Grupo G', flag: 'be', stickers: ['BEL1', 'BEL2', 'BEL3', 'BEL4', 'BEL5', 'BEL6', 'BEL7', 'BEL8', 'BEL9', 'BEL10', 'BEL11', 'BEL12', 'BEL13', 'BEL14', 'BEL15', 'BEL16', 'BEL17', 'BEL18', 'BEL19', 'BEL20'] },
@@ -117,7 +117,8 @@ export const ACHIEVEMENTS = [
   { id: 'super_classico', name: 'Super Clássico', description: 'Complete Brasil e Argentina por inteiro', icon: 'Trophy' },
   { id: 'euro_complete', name: 'Euro Soberano', description: 'Complete as seleções da Europa', icon: 'Shield' },
   { id: 'world_champions', name: 'Clube dos Campeões', description: 'Complete as 7 seleções campeãs mundiais do álbum', icon: 'Trophy' },
-  { id: 'world_tour', name: 'Volta ao Mundo', description: 'Cole figurinhas de 5 continentes', icon: 'Globe' }
+  { id: 'world_tour', name: 'Volta ao Mundo', description: 'Cole figurinhas de 5 continentes', icon: 'Globe' },
+  { id: 'repescagem_complete', name: 'Guerreiros da Repescagem', description: 'Complete as 6 seleções da repescagem mundial da Copa 2026', icon: 'History' }
 ];
 
 export const getAchievements = (collection) => {
@@ -230,6 +231,13 @@ export const getAchievements = (collection) => {
   const hasAf = afCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
   const hasAs = asCats.some(catId => CATEGORIES.find(c => c.id === catId)?.stickers.some(code => collection[code]?.status === 'collected'));
   if (hasSa && hasNa && hasEu && hasAf && hasAs) unlocked.add('world_tour');
+
+  // Repescagem complete (rep._tcheca, bósnia, turquia, suécia, iraque, congo)
+  const playoffCats = ['rep._tcheca', 'bósnia', 'turquia', 'suécia', 'iraque', 'congo'];
+  const playoffComplete = playoffCats.every(catId => 
+    CATEGORIES.find(c => c.id === catId)?.stickers.every(code => collection[code]?.status === 'collected')
+  );
+  if (playoffComplete) unlocked.add('repescagem_complete');
 
   return unlocked;
 };
@@ -362,6 +370,19 @@ export const getAchievementProgress = (collection) => {
   if (hasAf) continents++;
   if (hasAs) continents++;
   progress['world_tour'] = { current: continents, target: 5 };
+
+  // Repescagem complete progress
+  const playoffCats = ['rep._tcheca', 'bósnia', 'turquia', 'suécia', 'iraque', 'congo'];
+  let playoffCollected = 0;
+  let playoffTotal = 0;
+  playoffCats.forEach(catId => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    if (cat) {
+      playoffTotal += cat.stickers.length;
+      playoffCollected += cat.stickers.filter(code => collection[code]?.status === 'collected').length;
+    }
+  });
+  progress['repescagem_complete'] = { current: playoffCollected, target: playoffTotal };
 
   return progress;
 };

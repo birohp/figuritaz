@@ -6,7 +6,7 @@ import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Sub-component for Flags/Logos to handle errors gracefully
-const TeamIcon = ({ team, isSpecial }) => {
+const TeamIcon = ({ team, isSpecial, t }) => {
   const [hasError, setHasError] = useState(false);
 
   const getUrl = () => {
@@ -15,13 +15,15 @@ const TeamIcon = ({ team, isSpecial }) => {
     return `https://flagcdn.com/w160/${team.flag}.png`;
   };
 
+  const displayName = t?.countries?.[team.id] || team.name;
+
   if (hasError) {
     return (
       <div className={`w-full h-full flex flex-col items-center justify-center bg-primary/10 rounded gap-1 p-2`}>
         {team.id === 'fifa_world_cup' ? <Trophy size={24} className="text-primary" /> :
           team.id === 'coca-cola' ? <Beer size={24} className="text-accent" /> :
             <span className="text-[10px] font-bold uppercase">{team.flag}</span>}
-        <span className="text-[8px] font-bold opacity-50 truncate w-full text-center">{team.name}</span>
+        <span className="text-[8px] font-bold opacity-50 truncate w-full text-center">{displayName}</span>
       </div>
     );
   }
@@ -29,8 +31,8 @@ const TeamIcon = ({ team, isSpecial }) => {
   return (
     <img
       src={getUrl()}
-      alt={team.name}
-      className={`transition-opacity duration-300 ${isSpecial ? 'h-full w-auto object-contain' : 'w-full h-full object-cover'}`}
+      alt={displayName}
+      className={`transition-opacity duration-300 ${isSpecial ? 'h-full w-auto object-contain' : 'absolute inset-0 w-full h-full object-cover'}`}
       onError={() => setHasError(true)}
     />
   );
@@ -220,7 +222,7 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
             localStorage.setItem('album_cols_count', nextCols);
           }}
           className="p-3 bg-surface-color border border-surface-border rounded-xl text-text-dim hover:text-white transition-all active:scale-95 shrink-0 flex items-center justify-center"
-          title={colsCount === 1 ? 'Mudar para 2 colunas' : 'Mudar para 1 coluna'}
+          title={colsCount === 1 ? t.changeTo2Cols : t.changeTo1Col}
         >
           {colsCount === 1 ? (
             <LayoutGrid size={20} className="text-primary animate-scale-in" />
@@ -267,25 +269,37 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
                 onClick={() => handleGroupSelect(group)}
                 className={`glass-card p-4 text-left hover:border-primary transition-all group active:scale-95 ${colSpanClass}`}
               >
-                <h3 className="text-[10px] font-black uppercase tracking-tighter mb-3 text-text-dim group-hover:text-primary">{group}</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-tighter mb-3 text-text-dim group-hover:text-primary">
+                  {group.startsWith('Grupo ') ? group.replace('Grupo ', (t.groupLabel || 'Grupo') + ' ') : group}
+                </h3>
                 <div className={`grid ${
                   isSpecial 
                     ? 'grid-cols-1' 
                     : (colsCount === 1 ? 'grid-cols-4' : 'grid-cols-2')
                 } gap-2`}>
-                  {teams.map(team => (
-                    <div key={team.id} className={`flex flex-col items-center gap-1 ${isSpecial ? 'h-24' : ''}`}>
-                      <div className={`w-full flex items-center justify-center rounded-xl overflow-hidden ${isSpecial ? 'h-full' : 'aspect-[3/2] bg-white/5 p-0.5 shadow-inner'}`}>
-                        <TeamIcon team={team} isSpecial={isSpecial} />
+                  {teams.map(team => {
+                    const isCompleted = team.stickers.every(code => collection[code]?.status === 'collected');
+                    return (
+                      <div key={team.id} className={`flex flex-col items-center gap-1 ${isSpecial ? 'h-24' : ''}`}>
+                        <div className={`w-full flex items-center justify-center rounded-xl relative ${isSpecial ? 'h-full' : 'aspect-[3/2] bg-white/5 p-0.5 shadow-inner'} ${isCompleted ? 'border border-emerald-500/30 ring-1 ring-emerald-500/20' : ''}`}>
+                          <div className="w-full h-full rounded-lg overflow-hidden flex items-center justify-center relative">
+                            <TeamIcon team={team} isSpecial={isSpecial} t={t} />
+                          </div>
+                          {isCompleted && (
+                            <div className="absolute -top-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 border border-white/20 shadow-md shadow-emerald-500/30 flex items-center justify-center z-10 animate-scale-in">
+                              <Check size={8} strokeWidth={4} />
+                            </div>
+                          )}
+                        </div>
+                        {/* Hide country name on 1-column view to keep it extremely clean */}
+                        {(colsCount === 2 || isSpecial) && (
+                          <span className={`text-[8px] font-bold truncate w-full text-center ${isCompleted ? 'text-emerald-400 font-extrabold' : 'text-text-dim'}`}>
+                            {t.countries?.[team.id] || team.name}
+                          </span>
+                        )}
                       </div>
-                      {/* Hide country name on 1-column view to keep it extremely clean */}
-                      {(colsCount === 2 || isSpecial) && (
-                        <span className="text-[8px] font-bold truncate w-full text-center text-text-dim">
-                          {team.name}
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </button>
             );
@@ -296,18 +310,30 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
       {/* Category Selection (Horizontal Flags Only) */}
       {selectedGroup && !searchTerm && categoriesInGroup.length > 1 && (
         <div className="flex gap-4 overflow-x-auto py-2 scrollbar-hide border-b border-white/5 px-2 justify-center">
-          {categoriesInGroup.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`flex-shrink-0 w-12 h-8 rounded-lg overflow-hidden border-2 transition-all active:scale-95 shadow-md ${selectedCategory === cat.id
-                ? 'border-primary scale-110 shadow-primary/20 z-10'
-                : 'border-white/10 opacity-60 hover:opacity-100'
-                }`}
-            >
-              <TeamIcon team={cat} isSpecial={false} />
-            </button>
-          ))}
+          {categoriesInGroup.map(cat => {
+            const isCompleted = cat.stickers.every(code => collection[code]?.status === 'collected');
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex-shrink-0 w-12 h-8 rounded-lg border-2 transition-all active:scale-95 shadow-md relative ${selectedCategory === cat.id
+                  ? 'border-primary scale-110 shadow-primary/20 z-10'
+                  : isCompleted
+                    ? 'border-emerald-500/50 opacity-90'
+                    : 'border-white/10 opacity-60 hover:opacity-100'
+                  }`}
+              >
+                <div className="w-full h-full rounded-md overflow-hidden flex items-center justify-center relative">
+                  <TeamIcon team={cat} isSpecial={false} t={t} />
+                </div>
+                {isCompleted && (
+                  <div className="absolute -top-0.5 -right-0.5 bg-emerald-500 text-white rounded-full p-0.5 border border-white/20 shadow-md shadow-emerald-500/30 flex items-center justify-center z-10 animate-scale-in">
+                    <Check size={6} strokeWidth={4} />
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -316,14 +342,25 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
         <div className="space-y-3">
           {!searchTerm && currentCategory && (
             <div className="flex items-center justify-center gap-3 px-1 animate-slide-up">
-              <div className="w-8 h-6 rounded border border-white/10 overflow-hidden shadow-sm shrink-0">
-                <TeamIcon team={currentCategory} isSpecial={false} />
+              <div className="w-8 h-6 rounded border border-white/10 shadow-sm shrink-0 relative">
+                <div className="w-full h-full rounded overflow-hidden flex items-center justify-center relative">
+                  <TeamIcon team={currentCategory} isSpecial={false} t={t} />
+                </div>
+                {currentCategory.stickers.every(code => collection[code]?.status === 'collected') && (
+                  <div className="absolute -top-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 border border-white/20 shadow-md shadow-emerald-500/30 flex items-center justify-center z-10 animate-scale-in">
+                    <Check size={8} strokeWidth={4} />
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-black text-text-color tracking-tight uppercase">
-                  {currentCategory.name}
+                  {t.countries?.[currentCategory.id] || currentCategory.name}
                 </h2>
-                <div className="flex items-center gap-1 font-black text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20 shadow-inner">
+                <div className={`flex items-center gap-1 font-black text-xs px-2.5 py-1 rounded-lg border shadow-inner transition-all ${
+                  currentCategory.stickers.every(code => collection[code]?.status === 'collected')
+                    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'
+                    : 'text-primary bg-primary/10 border-primary/20'
+                }`}>
                   <span>{currentCategory.stickers.filter(code => collection[code]?.status === 'collected').length}</span>
                   <span className="opacity-50 text-[10px]">/</span>
                   <span>{currentCategory.stickers.length}</span>
