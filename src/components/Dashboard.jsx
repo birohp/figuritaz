@@ -733,11 +733,14 @@ function Dashboard({
             <span className="text-sm font-bold text-text-dim">/ {stats.total}</span>
           </div>
           <span className="text-[10px] font-black text-text-dim uppercase tracking-widest mt-1">{t.coladas}</span>
+          <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest mt-1">
+            {lang === 'pt' ? `Faltam ${stats.total - stats.coladas}` : lang === 'es' ? `Faltan ${stats.total - stats.coladas}` : `Missing ${stats.total - stats.coladas}`}
+          </span>
         </div>
 
         <button 
           onClick={() => setIsRepeatedOpen(true)}
-          className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece active:scale-95 transition-all group shadow-xl border-white/5"
+          className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece active:scale-95 transition-all group shadow-md border-white/5"
         >
           <div className="relative">
             <span className="text-4xl font-black text-text-color">{stats.repetidas}</span>
