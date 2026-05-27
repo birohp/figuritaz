@@ -1476,6 +1476,9 @@ function Dashboard({
                       <p className="text-2xl font-black text-white">{stats.coladas}</p>
                       <p className="text-[13px] font-bold text-white/30">/ {stats.total}</p>
                     </div>
+                    <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest mt-1">
+                      {lang === 'pt' ? `Faltam ${stats.total - stats.coladas}` : lang === 'es' ? `Faltan ${stats.total - stats.coladas}` : `Missing ${stats.total - stats.coladas}`}
+                    </p>
                   </div>
 
                   {/* Quadrinho 2: Seleção mais completa */}
