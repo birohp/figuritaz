@@ -397,62 +397,99 @@ function Dashboard({
       }
     });
 
-    const parsedCodes = new Set();
-
-    // 2. Process the pasted text line by line
-    const lines = pastedText.split('\n');
-    lines.forEach(line => {
-      const upperLine = line.toUpperCase();
-
-      // Step 2a: Find direct full codes in the line (e.g. "MEX6", "FWC14")
-      const directCodes = upperLine.match(/[A-Z]+[0-9]+/g) || [];
-      directCodes.forEach(code => {
-        if (ALL_VALID_CODES.includes(code)) {
-          parsedCodes.add(code);
-        }
-      });
-
-      // Special case: direct '00' code support
-      if (/\b00\b/.test(upperLine)) {
-        parsedCodes.add('00');
-      }
-
-      // Step 2b: Find segment-based list prefixes (e.g. "MEX 🇲🇽: 6, 8, 9")
-      const prefixMatches = [];
-      const regex = /\b([A-Z]+)\b/g;
-      let match;
-      while ((match = regex.exec(upperLine)) !== null) {
-        if (prefixes.has(match[1])) {
-          prefixMatches.push({
-            prefix: match[1],
-            index: match.index,
-            endIndex: regex.lastIndex
-          });
-        }
-      }
-
-      // If we have prefix matches, process each prefix's segment of numbers
-      for (let i = 0; i < prefixMatches.length; i++) {
-        const current = prefixMatches[i];
-        const next = prefixMatches[i + 1];
-
-        // Segment text goes from the end of current prefix match to the start of the next prefix match (or line end)
-        const segmentStart = current.endIndex;
-        const segmentEnd = next ? next.index : upperLine.length;
-        const segment = upperLine.substring(segmentStart, segmentEnd);
-
-        // Extract all distinct numbers in this segment and combine with the current prefix
-        const numbers = segment.match(/\b\d+\b/g) || [];
-        numbers.forEach(num => {
-          const combinedCode = current.prefix + num;
-          if (ALL_VALID_CODES.includes(combinedCode)) {
-            parsedCodes.add(combinedCode);
+    // Helper function to extract codes from a block of text
+    const extractCodesFromBlock = (text) => {
+      const parsedCodes = new Set();
+      const lines = text.split('\n');
+      lines.forEach(line => {
+        const upperLine = line.toUpperCase();
+        const directCodes = upperLine.match(/[A-Z]+[0-9]+/g) || [];
+        directCodes.forEach(code => {
+          if (ALL_VALID_CODES.includes(code)) {
+            parsedCodes.add(code);
           }
         });
-      }
-    });
+        if (/\b00\b/.test(upperLine)) {
+          parsedCodes.add('00');
+        }
 
-    const uniqueFound = Array.from(parsedCodes);
+        const prefixMatches = [];
+        const regex = /\b([A-Z]+)\b/g;
+        let match;
+        while ((match = regex.exec(upperLine)) !== null) {
+          if (prefixes.has(match[1])) {
+            prefixMatches.push({
+              prefix: match[1],
+              index: match.index,
+              endIndex: regex.lastIndex
+            });
+          }
+        }
+
+        for (let i = 0; i < prefixMatches.length; i++) {
+          const current = prefixMatches[i];
+          const next = prefixMatches[i + 1];
+          const segmentStart = current.endIndex;
+          const segmentEnd = next ? next.index : upperLine.length;
+          const segment = upperLine.substring(segmentStart, segmentEnd);
+          const numbers = segment.match(/\b\d+\b/g) || [];
+          numbers.forEach(num => {
+            const combinedCode = current.prefix + num;
+            if (ALL_VALID_CODES.includes(combinedCode)) {
+              parsedCodes.add(combinedCode);
+            }
+          });
+        }
+      });
+      return Array.from(parsedCodes);
+    };
+
+    if (analysisMode === 'friend_combo') {
+      // Split pasted text into "Me faltam" (Wishlist) and "Repetidas" (Duplicates) segments
+      const textUpper = pastedText.toUpperCase();
+      let wishlistText = "";
+      let repeatedText = "";
+
+      // Look for standard split patterns like "REPETIDAS" or "REPETIDA"
+      const splitKeywords = ["REPETIDAS", "REPETIDA", "REPETIDOS", "REPETIDO", "DUPLICATES", "DUPLICATE", "MIS REPETIDAS"];
+      let splitIndex = -1;
+      
+      for (const keyword of splitKeywords) {
+        const idx = textUpper.indexOf(keyword);
+        if (idx !== -1) {
+          splitIndex = idx;
+          break;
+        }
+      }
+
+      if (splitIndex !== -1) {
+        wishlistText = pastedText.substring(0, splitIndex);
+        repeatedText = pastedText.substring(splitIndex);
+      } else {
+        // Fallback: try to guess or use the whole text for both
+        wishlistText = pastedText;
+        repeatedText = pastedText;
+      }
+
+      const friendWishlist = extractCodesFromBlock(wishlistText);
+      const friendRepeated = extractCodesFromBlock(repeatedText);
+
+      // What I can give him: he needs (wishlist) and I have repeated
+      const canGive = friendWishlist.filter(code => collection[code] && collection[code].repeated > 0);
+      
+      // What I receive: I need (not collected) and he has repeated
+      const receives = friendRepeated.filter(code => !collection[code] || collection[code].status !== 'collected');
+
+      if (canGive.length === 0 && receives.length === 0) {
+        setAnalysis({ error: lang === 'pt' ? 'Nenhuma figurinha compatível para troca encontrada.' : 'No matching stickers found for trading.' });
+        return;
+      }
+
+      setAnalysis({ canGive, receives });
+      return;
+    }
+
+    const uniqueFound = extractCodesFromBlock(pastedText);
 
     if (uniqueFound.length === 0) {
       setAnalysis({ error: t.noneFound });
@@ -1056,23 +1093,31 @@ function Dashboard({
               {!analysis ? (
                 <div className="flex-1 flex flex-col gap-4 overflow-hidden">
                   {/* Mode Selector */}
-                  <div className="flex p-1 bg-black/20 rounded-xl border border-white/5">
+                  <div className="flex p-1 bg-black/20 rounded-xl border border-white/5 gap-0.5">
                     <button 
                       onClick={() => setAnalysisMode('friend_repeated')}
-                      className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${analysisMode === 'friend_repeated' ? 'bg-secondary text-white shadow-lg' : 'text-text-dim'}`}
+                      className={`flex-1 py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${analysisMode === 'friend_repeated' ? 'bg-secondary text-white shadow-lg' : 'text-text-dim'}`}
                     >
                       {t.friendRepeated}
                     </button>
                     <button 
                       onClick={() => setAnalysisMode('friend_wishlist')}
-                      className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${analysisMode === 'friend_wishlist' ? 'bg-accent text-white shadow-lg' : 'text-text-dim'}`}
+                      className={`flex-1 py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${analysisMode === 'friend_wishlist' ? 'bg-accent text-white shadow-lg' : 'text-text-dim'}`}
                     >
                       {t.friendWishlist}
                     </button>
+                    <button 
+                      onClick={() => setAnalysisMode('friend_combo')}
+                      className={`flex-1 py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${analysisMode === 'friend_combo' ? 'bg-primary text-white shadow-lg' : 'text-text-dim'}`}
+                    >
+                      {t.friendCombo || 'Repetidas + Faltantes'}
+                    </button>
                   </div>
 
-                  <p className="text-[10px] text-text-dim font-bold uppercase tracking-tight text-center px-4">
-                    {analysisMode === 'friend_repeated' ? t.friendRepeatedHint : t.friendWishlistHint}
+                  <p className="text-[10px] text-text-dim font-bold uppercase tracking-tight text-center px-4 leading-tight">
+                    {analysisMode === 'friend_repeated' && t.friendRepeatedHint}
+                    {analysisMode === 'friend_wishlist' && t.friendWishlistHint}
+                    {analysisMode === 'friend_combo' && (t.friendComboHint || 'Cole o texto do amigo com as Repetidas e Wishlist dele.')}
                   </p>
 
                   <textarea
@@ -1083,7 +1128,9 @@ function Dashboard({
                   />
                   <button 
                     onClick={handleAnalyze}
-                    className={`w-full py-4 rounded-xl font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${analysisMode === 'friend_repeated' ? 'bg-secondary' : 'bg-accent'}`}
+                    className={`w-full py-4 rounded-xl font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
+                      analysisMode === 'friend_repeated' ? 'bg-secondary' : analysisMode === 'friend_wishlist' ? 'bg-accent' : 'bg-primary'
+                    }`}
                   >
                     <Send size={18} />
                     {t.analyze}
@@ -1167,9 +1214,54 @@ function Dashboard({
                         </>
                       )}
 
+                      {/* Mode C: Friend's Duplicates + Wishlist Combo */}
+                      {analysisMode === 'friend_combo' && (
+                        <>
+                          {/* Perfect Match summary for Combo */}
+                          <div className="bg-primary/10 border border-primary/20 p-4 rounded-2xl text-center space-y-2">
+                            <h3 className="text-sm font-black text-primary uppercase tracking-wider flex items-center justify-center gap-2">
+                              <span>🤝</span> Match Perfeito Cruzado!
+                            </h3>
+                            <p className="text-[10px] text-text-dim uppercase font-bold tracking-tight">
+                              Você pode passar <span className="text-accent">{analysis.canGive.length}</span> figurinhas e receber <span className="text-primary">{analysis.receives.length}</span> de volta.
+                            </p>
+                          </div>
+
+                          <div className="space-y-3">
+                            <h3 className="text-sm font-black text-accent flex items-center gap-2 uppercase tracking-widest">
+                              <Check size={16} className="text-accent" />
+                              {t.youGive} ({analysis.canGive.length})
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.canGive.map(code => (
+                                <span key={code} className="bg-accent/20 text-accent border border-accent/30 px-3 py-1 rounded-full text-xs font-black animate-scale-in">
+                                  {code}
+                                </span>
+                              ))}
+                              {analysis.canGive.length === 0 && <span className="text-text-dim text-xs italic">Você não tem repetidas que interessem a ele.</span>}
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <h3 className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-widest">
+                              <Download size={16} className="text-primary" />
+                              {t.youReceive} ({analysis.receives.length})
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.receives.map(code => (
+                                <span key={code} className="bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full text-xs font-black animate-scale-in">
+                                  {code}
+                                </span>
+                              ))}
+                              {analysis.receives.length === 0 && <span className="text-text-dim text-xs italic">Ele não tem repetidas que você precise.</span>}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
                       <button 
                         onClick={() => setAnalysis(null)}
-                        className="w-full bg-white/10 py-3 rounded-xl font-bold hover:bg-white/20 transition-all text-text-color"
+                        className="w-full bg-white/10 py-3 rounded-xl font-bold hover:bg-white/20 transition-all text-text-color shrink-0 mt-4"
                       >
                         {t.newAnalysis}
                       </button>
