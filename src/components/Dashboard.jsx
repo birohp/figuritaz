@@ -27,7 +27,11 @@ function Dashboard({
 
   // Matchmaking Computation
   const partnerCollection = tradePartnerData?.collection || {};
-  const partnerName = tradePartnerData?.settings?.userName || t.partnerName || 'Parceiro';
+  const partnerName = tradePartnerData?.settings?.userName || 
+                      tradePartnerData?.displayName || 
+                      (tradePartnerData?.email ? tradePartnerData.email.split('@')[0] : null) || 
+                      t.partnerName || 
+                      'Parceiro';
   
   const gives = ALL_VALID_CODES.filter(code => {
     const mySticker = collection[code];
@@ -549,11 +553,11 @@ function Dashboard({
     const givesList = gives.join(', ') || t.none;
     const receivesList = receives.join(', ') || t.none;
     const summaryText = t.perfectMatchSummary
-      .replaceAll('{partner}', partnerName)
-      .replace('{gives}', givesList)
-      .replace('{nGive}', gives.length)
-      .replace('{receives}', receivesList)
-      .replace('{nReceive}', receives.length);
+      .replaceAll('{partnerName}', partnerName)
+      .replace('{givesList}', givesList)
+      .replace('{givesCount}', gives.length)
+      .replace('{receivesList}', receivesList)
+      .replace('{receivesCount}', receives.length);
 
     try {
       await navigator.clipboard.writeText(summaryText);

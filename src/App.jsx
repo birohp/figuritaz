@@ -327,11 +327,25 @@ function App() {
           settings,
           packets,
           unlockedAchievements,
+          displayName: user.displayName || null,
+          email: user.email || null,
           updatedAt: new Date().toISOString()
         });
         initialLoad = false;
       }
     });
+
+    // Proactively save/update displayName & email metadata when logging in so partner can see our name
+    updateDoc(userRef, {
+      displayName: user.displayName || null,
+      email: user.email || null
+    }).catch(() => {
+      setDoc(userRef, {
+        displayName: user.displayName || null,
+        email: user.email || null
+      }, { merge: true });
+    });
+
     return () => unsub();
   }, [user]);
 
