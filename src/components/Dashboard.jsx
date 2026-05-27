@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { calculateStats, ALL_VALID_CODES, SHINY_CODES, calculateCompletionEstimate, getAchievements, ACHIEVEMENTS } from '../lib/stickers';
-import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet, ExternalLink, Award, BarChart3, Download, LayoutGrid, Trash2 } from 'lucide-react';
+import { Trophy, Hash, Repeat, Info, Share2, Check, ClipboardList, Send, X, AlertCircle, ShoppingBag, Plus, Minus, TrendingUp, DollarSign, Star, Users as UsersIcon, Calculator, Wallet, ExternalLink, Award, BarChart3, Download, LayoutGrid, Trash2, Camera } from 'lucide-react';
 import { translations } from '../lib/translations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CATEGORIES } from '../lib/stickers';
 import html2canvas from 'html2canvas';
+import { Html5Qrcode } from 'html5-qrcode';
 
 function Dashboard({ 
   collection, 
@@ -18,6 +19,7 @@ function Dashboard({
   tradePartnerUid = null, 
   tradePartnerData = null, 
   onClearTrade = () => {}, 
+  onStartTrade = () => {},
   user = null 
 }) {
   const stats = calculateStats(collection);
@@ -188,6 +190,111 @@ function Dashboard({
   const [isCloudTradeModalOpen, setIsCloudTradeModalOpen] = useState(false);
   const [pastedText, setPastedText] = useState('');
   const [analysis, setAnalysis] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const scannerRef = useRef(null);
+
+  // Scanner lifecycle hook
+  useEffect(() => {
+    if (!isScanning) {
+      if (scannerRef.current) {
+        if (scannerRef.current.isScanning) {
+          scannerRef.current.stop()
+            .then(() => {
+              scannerRef.current = null;
+            })
+            .catch(err => console.error("Error stopping scanner:", err));
+        } else {
+          scannerRef.current = null;
+        }
+      }
+      return;
+    }
+
+    // Give react time to mount the DOM element completely
+    const timer = setTimeout(() => {
+      try {
+        const container = document.getElementById("qr-reader-el");
+        if (!container) {
+          console.warn("QR Container not found in DOM yet");
+          return;
+        }
+
+        const html5QrCode = new Html5Qrcode("qr-reader-el");
+        scannerRef.current = html5QrCode;
+
+        html5QrCode.start(
+          { facingMode: "environment" }, // Prefer back camera automatically, fall back if not available
+          {
+            fps: 10,
+            qrbox: { width: 220, height: 220 }
+          },
+          (decodedText) => {
+            // Find trade query parameter
+            try {
+              const url = new URL(decodedText);
+              const partnerUid = url.searchParams.get("trade");
+              if (partnerUid) {
+                onStartTrade(partnerUid);
+                // Redirect user path parameter visually
+                window.history.replaceState({}, document.title, `/?trade=${partnerUid}`);
+                setIsScanning(false);
+                setIsCloudTradeModalOpen(false);
+                setIsTradeDetailsOpen(true);
+              } else {
+                alert(lang === 'pt' ? "Código QR inválido. Certifique-se de escanear o QR de outro usuário do FiguritaZ." : "Invalid QR Code.");
+              }
+            } catch (e) {
+              // Decoded text might be the UID directly
+              if (decodedText && decodedText.length > 10 && !decodedText.includes(" ")) {
+                onStartTrade(decodedText);
+                window.history.replaceState({}, document.title, `/?trade=${decodedText}`);
+                setIsScanning(false);
+                setIsCloudTradeModalOpen(false);
+                setIsTradeDetailsOpen(true);
+              } else {
+                alert(lang === 'pt' ? "QR Code não reconhecido." : "QR Code not recognized.");
+              }
+            }
+          },
+          (errorMessage) => {
+            // Silence frame scan errors to prevent UI noise
+          }
+        ).catch(err => {
+          console.error("Failed to start scanning with environment camera:", err);
+          // Try loading with any camera if back camera fails
+          html5QrCode.start(
+            { facingMode: "user" },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            (decodedText) => {
+              if (decodedText) {
+                onStartTrade(decodedText);
+                setIsScanning(false);
+                setIsCloudTradeModalOpen(false);
+                setIsTradeDetailsOpen(true);
+              }
+            },
+            () => {}
+          ).catch(fallbackErr => {
+            console.error("All camera startups failed:", fallbackErr);
+          });
+        });
+
+      } catch (err) {
+        console.error("Failed to initialize scanner:", err);
+      }
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+      if (scannerRef.current) {
+        const instance = scannerRef.current;
+        if (instance.isScanning) {
+          instance.stop().catch(err => console.error("Error stopping scanner on unmount:", err));
+        }
+        scannerRef.current = null;
+      }
+    };
+  }, [isScanning]);
 
   const pricePerSticker = ((settings?.packetPrice || 0) / 7).toFixed(2);
   const totalInvested = (packets * (settings?.packetPrice || 0)).toFixed(2);
@@ -1501,7 +1608,7 @@ function Dashboard({
             >
               <div className="flex justify-between items-center border-b border-white/10 pb-4">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-text-color uppercase tracking-tight">
-                  <Share2 size={20} className="text-primary" />
+                  <Repeat size={20} className="text-accent" />
                   {lang === 'pt' ? 'COMPARTILHAR REPETIDAS' : t.share}
                 </h2>
                 <button onClick={() => setIsShareModalOpen(false)} className="p-1 hover:bg-white/10 rounded-full text-text-color">
@@ -1609,73 +1716,101 @@ function Dashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="glass-card w-full max-w-sm p-6 space-y-6 max-h-[90vh] flex flex-col items-center text-center relative overflow-hidden"
+              className="glass-card w-full max-w-sm p-5 space-y-4 max-h-[90vh] flex flex-col items-center text-center relative overflow-hidden"
               style={{ backgroundColor: 'var(--board-bg)' }}
             >
               <button 
                 onClick={() => setIsCloudTradeModalOpen(false)}
-                className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full text-text-color transition-colors active:scale-90"
+                className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full text-text-color transition-colors active:scale-90 z-25"
               >
                 <X size={20} />
               </button>
 
-              <div className="bg-secondary/20 p-4 rounded-full border border-secondary/30 mt-4">
-                <Repeat className="text-secondary animate-pulse" size={28} />
-              </div>
+              <div className="flex-1 overflow-y-auto w-full pr-1 space-y-4 scrollbar-hide flex flex-col items-center">
+                <div className="bg-secondary/20 p-3.5 rounded-full border border-secondary/30 mt-2 shrink-0">
+                  <Repeat className="text-secondary animate-pulse" size={24} />
+                </div>
 
-              <div className="space-y-2">
-                <h2 className="text-lg font-black text-white uppercase tracking-wider">
-                  {lang === 'pt' ? 'TROCA AUTOMÁTICA EM NUVEM' : t.cloudSwapLink}
-                </h2>
-                <p className="text-[10px] text-text-dim px-4 leading-relaxed font-bold uppercase">
-                  {lang === 'pt' ? 'Seu amigo verá quais figurinhas vocês podem trocar de forma instantânea!' : t.cloudSwapFriendDesc}
-                </p>
-              </div>
-
-              {!user ? (
-                <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4 space-y-3 w-full">
-                  <p className="text-[10px] font-medium text-text-dim leading-relaxed">
-                    {t.cloudSwapLoginDesc}
-                  </p>
-                  <p className="text-[10px] font-black text-accent uppercase tracking-widest">
-                    {lang === 'pt' ? 'Faça login pelo menu de Configurações' : 'Please log in via Settings'}
+                <div className="space-y-1 shrink-0">
+                  <h2 className="text-base font-black text-white uppercase tracking-wider">
+                    {lang === 'pt' ? 'TROCA AUTOMÁTICA EM NUVEM' : t.cloudSwapLink}
+                  </h2>
+                  <p className="text-[9px] text-text-dim px-4 leading-relaxed font-bold uppercase">
+                    {lang === 'pt' ? 'Seu amigo verá quais figurinhas vocês podem trocar de forma instantânea!' : t.cloudSwapFriendDesc}
                   </p>
                 </div>
-              ) : (
-                <>
-                  {/* QR Code Container */}
-                  <div className="relative p-3 bg-white rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.3)] border-2 border-secondary/30 transition-transform duration-300">
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${window.location.origin}/?trade=${user.uid}`)}`} 
-                      alt="Trade QR Code" 
-                      className="w-[160px] h-[160px]"
-                    />
-                  </div>
 
-                  {/* Copy Link Button */}
-                  <button 
-                    onClick={handleCopyTradeLink}
-                    className="w-full bg-secondary hover:bg-secondary/90 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5"
-                  >
-                    {copiedTradeLink ? (
-                      <>
-                        <Check size={14} />
-                        {t.tradeLinkCopied}
-                      </>
+                {!user ? (
+                  <div className="bg-accent/5 border border-accent/20 rounded-2xl p-4 space-y-3 w-full shrink-0">
+                    <p className="text-[10px] font-medium text-text-dim leading-relaxed">
+                      {t.cloudSwapLoginDesc}
+                    </p>
+                    <p className="text-[10px] font-black text-accent uppercase tracking-widest">
+                      {lang === 'pt' ? 'Faça login pelo menu de Configurações' : 'Please log in via Settings'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="w-full space-y-4 flex flex-col items-center">
+                    {/* QR Code Container */}
+                    <div className="relative p-2.5 bg-white rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.3)] border-2 border-secondary/30 transition-transform duration-300 shrink-0">
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${window.location.origin}/?trade=${user.uid}`)}`} 
+                        alt="Trade QR Code" 
+                        className="w-[145px] h-[145px]"
+                      />
+                    </div>
+
+                    {/* Camera QR Scanner Integration */}
+                    {isScanning ? (
+                      <div className="w-full space-y-2.5">
+                        <div className="relative overflow-hidden rounded-2xl border-2 border-primary bg-black/45 aspect-square flex flex-col items-center justify-center w-full max-w-[240px] mx-auto">
+                          <div id="qr-reader-el" className="w-full h-full" />
+                          <button
+                            onClick={() => setIsScanning(false)}
+                            className="absolute bottom-3 bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-lg"
+                          >
+                            {lang === 'pt' ? 'Cancelar Câmera' : lang === 'es' ? 'Cancelar Cámara' : 'Cancel Camera'}
+                          </button>
+                        </div>
+                        <p className="text-[8px] text-text-dim uppercase font-bold tracking-wider">
+                          {lang === 'pt' ? 'Aponte a câmera para o QR Code do seu amigo' : lang === 'es' ? 'Apunta la cámara al QR Code de tu amigo' : 'Point the camera at your friend\'s QR Code'}
+                        </p>
+                      </div>
                     ) : (
-                      <>
-                        <ExternalLink size={14} />
-                        {lang === 'pt' ? 'LINK DE TROCA 🤝' : t.shareTradeLink}
-                      </>
+                      <button
+                        onClick={() => setIsScanning(true)}
+                        className="w-full bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary font-black text-xs uppercase tracking-widest py-3.5 rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 shrink-0"
+                      >
+                        <Camera size={14} />
+                        {lang === 'pt' ? 'ESCANEAR QR CODE 📷' : lang === 'es' ? 'ESCANEAR QR CODE 📷' : 'SCAN QR CODE 📷'}
+                      </button>
                     )}
-                  </button>
-                </>
-              )}
+
+                    {/* Copy Link Button */}
+                    <button 
+                      onClick={handleCopyTradeLink}
+                      className="w-full bg-secondary hover:bg-secondary/90 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 shrink-0"
+                    >
+                      {copiedTradeLink ? (
+                        <>
+                          <Check size={14} />
+                          {t.tradeLinkCopied}
+                        </>
+                      ) : (
+                        <>
+                          <ExternalLink size={14} />
+                          {lang === 'pt' ? 'LINK DE TROCA 🤝' : t.shareTradeLink}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}

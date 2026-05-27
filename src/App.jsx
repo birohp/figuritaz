@@ -477,6 +477,7 @@ function App() {
                 unlockedAchievements={unlockedAchievements}
                 tradePartnerUid={tradePartnerUid}
                 tradePartnerData={tradePartnerData}
+                onStartTrade={setTradePartnerUid}
                 onClearTrade={() => {
                   setTradePartnerUid(null);
                   setTradePartnerData(null);
