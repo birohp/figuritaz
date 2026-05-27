@@ -727,7 +727,7 @@ function Dashboard({
 
       {/* Grid of Tactical Metrics & Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece shadow-md border-white/5">
+        <div className="glass-card p-6 flex flex-col items-center justify-center text-center shadow-md">
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-black text-text-color">{stats.coladas}</span>
             <span className="text-sm font-bold text-text-dim">/ {stats.total}</span>
@@ -740,7 +740,7 @@ function Dashboard({
 
         <button 
           onClick={() => setIsRepeatedOpen(true)}
-          className="glass-card p-6 flex flex-col items-center justify-center text-center tactical-piece active:scale-95 transition-all group shadow-md border-white/5"
+          className="glass-card p-6 flex flex-col items-center justify-center text-center active:scale-95 transition-all group shadow-md"
         >
           <div className="relative">
             <span className="text-4xl font-black text-text-color">{stats.repetidas}</span>
