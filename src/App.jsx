@@ -3,13 +3,14 @@ import { auth, googleProvider, db } from './lib/firebase';
 import { GoogleAuthProvider, signInWithCredential, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3, Award, Heart, Coffee, ExternalLink, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Book, LogOut, User, Settings as SettingsIcon, X, Globe, Palette, MapPin, DollarSign, BarChart3, Award, Heart, Coffee, ExternalLink, ClipboardList, Wallet, Check } from 'lucide-react';
 import AdBanner from './components/AdBanner';
 import Dashboard from './components/Dashboard';
 import StickerGrid from './components/StickerGrid';
 import Stats from './components/Stats';
 import Achievements from './components/Achievements';
 import AchievementShare from './components/AchievementShare';
+import Finance from './components/Finance';
 import { translations } from './lib/translations';
 import { getAchievements } from './lib/stickers';
 
@@ -52,6 +53,22 @@ function App() {
   const [isTradeLoading, setIsTradeLoading] = useState(false);
 
   const t = translations[settings.lang];
+
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem(`has_seen_onboarding_${activeTab}`);
+    if (!hasSeen) {
+      setShowOnboarding(true);
+    } else {
+      setShowOnboarding(false);
+    }
+  }, [activeTab]);
+
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false);
+    localStorage.setItem(`has_seen_onboarding_${activeTab}`, 'true');
+  };
 
   // Apply Theme Variables
   useEffect(() => {
@@ -123,8 +140,9 @@ function App() {
     if (!Capacitor.isNativePlatform()) return;
 
     const handleBackButton = async (data) => {
-      // 1. Check if any modal backdrop exists in the DOM
-      const modalBackdrop = document.querySelector('.backdrop-blur-sm');
+      // 1. Check if any real fixed modal backdrop exists in the DOM
+      const modalBackdrop = document.querySelector('.fixed.backdrop-blur-sm, .fixed.backdrop-blur-md');
+      
       if (modalBackdrop || isSettingsOpen) {
         if (isSettingsOpen) {
           setIsSettingsOpen(false);
@@ -132,13 +150,14 @@ function App() {
         }
 
         if (modalBackdrop) {
-          const buttons = Array.from(document.querySelectorAll('button'));
+          // Search close button specifically inside the active modal backdrop
+          const buttons = Array.from(modalBackdrop.querySelectorAll('button'));
           const closeButton = buttons.find(btn => {
             const text = btn.innerText?.toLowerCase() || '';
             const hasCloseText = text.includes('fechar') || text.includes('close') || text.includes('cancelar') || text.includes('ignorar');
             const hasCloseIcon = btn.querySelector('svg');
             return hasCloseText || hasCloseIcon;
-          });
+          }) || buttons[0]; // Fallback to first button inside the modal if no specific text/icon matches
           
           if (closeButton) {
             closeButton.click();
@@ -147,7 +166,14 @@ function App() {
         }
       }
 
-      // 2. If no modal is open, check if we can go back in history
+      // 2. If no modal is open, check if there is a screen back button (e.g., country list back button)
+      const screenBackButton = document.querySelector('.lucide-chevron-left')?.closest('button');
+      if (screenBackButton) {
+        screenBackButton.click();
+        return;
+      }
+
+      // 3. Otherwise, check if we can go back in history or exit
       if (data.canGoBack) {
         window.history.back();
       } else {
@@ -216,7 +242,7 @@ function App() {
 
   // Calculate and persist achievements permanently once unlocked
   useEffect(() => {
-    const active = getAchievements(collection);
+    const active = getAchievements(collection, settings);
     
     setUnlockedAchievements(prev => {
       const currentSet = new Set(prev);
@@ -506,6 +532,7 @@ function App() {
                 collection={collection} 
                 onUpdate={updateCollection} 
                 lang={settings.lang}
+                settings={settings}
               />
             )}
             {activeTab === 'stats' && (
@@ -520,6 +547,16 @@ function App() {
                 collection={collection} 
                 lang={settings.lang}
                 unlockedAchievements={unlockedAchievements}
+                settings={settings}
+              />
+            )}
+            {activeTab === 'finance' && (
+              <Finance 
+                collection={collection} 
+                lang={settings.lang}
+                packets={packets}
+                onUpdatePackets={updatePackets}
+                settings={settings}
               />
             )}
           </motion.div>
@@ -544,6 +581,12 @@ function App() {
             onClick={() => setActiveTab('collection')}
             icon={<Book size={22} />}
             label={t.album}
+          />
+          <NavButton 
+            active={activeTab === 'finance'} 
+            onClick={() => setActiveTab('finance')}
+            icon={<Wallet size={22} />}
+            label={t.finance}
           />
           <NavButton 
             active={activeTab === 'stats'} 
@@ -685,8 +728,45 @@ function App() {
                   ))}
                 </div>
               </div>
+              {/* Exclude Coca-Cola Toggle */}
+              <div className="flex items-center justify-between p-3.5 bg-black/10 border border-white/5 rounded-2xl transition-all">
+                <span className="text-xs font-bold text-text-color uppercase tracking-wide">
+                  {t.excludeCoca}
+                </span>
+                <button
+                  onClick={() => updateSettings({ ...settings, excludeCoca: !settings.excludeCoca })}
+                  className={`w-11 h-6 rounded-full transition-all relative flex items-center p-0.5 cursor-pointer ${
+                    settings.excludeCoca ? 'bg-primary' : 'bg-black/30 border border-white/10'
+                  }`}
+                >
+                  <motion.div 
+                    layout
+                    className="w-5 h-5 bg-white rounded-full shadow-md"
+                    animate={{ x: settings.excludeCoca ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                </button>
+              </div>
 
-              {/* Cloud Sync Section */}
+              {/* Reactivate Onboarding Button */}
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('has_seen_onboarding_dashboard');
+                    localStorage.removeItem('has_seen_onboarding_collection');
+                    localStorage.removeItem('has_seen_onboarding_finance');
+                    localStorage.removeItem('has_seen_onboarding_stats');
+                    localStorage.removeItem('has_seen_onboarding_achievements');
+                    localStorage.removeItem('has_seen_onboarding');
+                    alert(t.onboardingReactivated);
+                    setShowOnboarding(true);
+                    setIsSettingsOpen(false);
+                  }}
+                  className="w-full py-3 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-primary/20 cursor-pointer"
+                >
+                  {t.reactivateOnboarding}
+                </button>
+              </div>              {/* Cloud Sync Section */}
               <div className="pt-4 border-t border-white/10 space-y-4">
                 <label className="text-xs font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
                   <Globe size={14} />
@@ -760,22 +840,64 @@ function App() {
                         newCollection[code] = { status: 'collected', repeated: 0 };
                       });
 
+                      // Build prefix map for robust parsing
+                      const prefixes = new Set();
+                      ALL_VALID_CODES.forEach(code => {
+                        const match = code.match(/^([A-Z]+)/);
+                        if (match) {
+                          prefixes.add(match[1]);
+                        }
+                      });
+
+                      const parsedCodes = new Set();
                       const lines = pastedText.split('\n');
                       lines.forEach(line => {
-                        const match = line.match(/^([A-Z]+)\s*.*:\s*([\d,\s]+)/i);
-                        if (match) {
-                          const prefix = match[1].toUpperCase();
-                          const numbers = match[2].split(',').map(n => n.trim());
-                          
+                        const upperLine = line.toUpperCase();
+                        const directCodes = upperLine.match(/[A-Z]+[0-9]+/g) || [];
+                        directCodes.forEach(code => {
+                          if (ALL_VALID_CODES.includes(code)) {
+                            parsedCodes.add(code);
+                          }
+                        });
+                        if (/\b00\b/.test(upperLine)) {
+                          parsedCodes.add('00');
+                        }
+
+                        const prefixMatches = [];
+                        const regex = /\b([A-Z]+)\b/g;
+                        let match;
+                        while ((match = regex.exec(upperLine)) !== null) {
+                          if (prefixes.has(match[1])) {
+                            prefixMatches.push({
+                              prefix: match[1],
+                              index: match.index,
+                              endIndex: regex.lastIndex
+                            });
+                          }
+                        }
+
+                        for (let i = 0; i < prefixMatches.length; i++) {
+                          const current = prefixMatches[i];
+                          const next = prefixMatches[i + 1];
+                          const segmentStart = current.endIndex;
+                          const segmentEnd = next ? next.index : upperLine.length;
+                          const segment = upperLine.substring(segmentStart, segmentEnd);
+                          const numbers = segment.match(/\b\d+\b/g) || [];
                           numbers.forEach(num => {
-                            if (!num) return;
-                            const code = `${prefix}${num}`;
-                            if (num === '00') {
-                               newCollection['00'] = { status: 'none', repeated: 0 };
-                            } else if (newCollection[code]) {
-                               newCollection[code] = { status: 'none', repeated: 0 };
+                            const combinedCode = current.prefix + num;
+                            if (ALL_VALID_CODES.includes(combinedCode)) {
+                              parsedCodes.add(combinedCode);
                             }
                           });
+                        }
+                      });
+
+                      // Mark matching missing stickers as 'none'
+                      parsedCodes.forEach(code => {
+                        if (newCollection[code]) {
+                          newCollection[code] = { status: 'none', repeated: 0 };
+                        } else if (code === '00') {
+                          newCollection['00'] = { status: 'none', repeated: 0 };
                         }
                       });
 
@@ -849,6 +971,60 @@ function App() {
                 className="w-full bg-black/5 py-3 rounded-xl font-bold hover:bg-black/10 transition-all border border-black/10 text-text-color"
               >
                 {t.close}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Onboarding Modal */}
+      <AnimatePresence>
+        {showOnboarding && t.onboarding && t.onboarding[activeTab] && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass-card w-full max-w-sm p-8 text-center space-y-6 border-2 border-primary/30 relative overflow-hidden"
+              style={{ backgroundColor: 'var(--modal-bg)' }}
+            >
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/20 blur-[60px] rounded-full pointer-events-none" />
+              
+              <div className="w-20 h-20 bg-primary rounded-full mx-auto flex items-center justify-center text-white shadow-lg shadow-primary/30 animate-bounce">
+                <Check size={40} strokeWidth={4} />
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-text-color uppercase tracking-tight">
+                  {t.onboarding[activeTab].title}
+                </h2>
+                <p className="text-xs text-text-dim leading-relaxed">
+                  {t.onboarding[activeTab].subtitle}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 text-left">
+                <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                  <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-black shrink-0">1</div>
+                  <p className="text-[10px] font-medium text-text-color" dangerouslySetInnerHTML={{ __html: t.onboarding[activeTab].step1 }} />
+                </div>
+                <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                  <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-[10px] font-black shrink-0">2</div>
+                  <p className="text-[10px] font-medium text-text-color" dangerouslySetInnerHTML={{ __html: t.onboarding[activeTab].step2 }} />
+                </div>
+              </div>
+
+
+
+              <button 
+                onClick={handleCloseOnboarding}
+                className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-sm active:scale-95 transition-all shadow-xl shadow-primary/20 hover:brightness-110 cursor-pointer"
+              >
+                {t.gotItCoach}
               </button>
             </motion.div>
           </motion.div>

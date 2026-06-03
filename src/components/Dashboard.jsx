@@ -22,7 +22,7 @@ function Dashboard({
   onStartTrade = () => {},
   user = null 
 }) {
-  const stats = calculateStats(collection);
+  const stats = calculateStats(collection, settings);
   const t = translations[lang];
 
   // Matchmaking Computation
@@ -51,13 +51,16 @@ function Dashboard({
       .replace('{give}', gives.length.toString())
       .replace('{receive}', receives.length.toString());
   };
-  const currentUnlocked = getAchievements(collection);
+  const currentUnlocked = getAchievements(collection, settings);
   const unlockedSet = new Set([...unlockedAchievements, ...currentUnlocked]);
   const [copied, setCopied] = useState(false);
   
-  const [financeStrategy, setFinanceStrategy] = useState('coop');
-  const [financeGroupSize, setFinanceGroupSize] = useState(5);
   const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
+
+  const isExcludeCoca = settings?.excludeCoca === true;
+  const filteredCategories = isExcludeCoca 
+    ? CATEGORIES.filter(c => c.id !== 'coca-cola') 
+    : CATEGORIES;
 
   const getCategoryEmoji = (flag) => {
     if (flag === 'fifa') return '🏆';
@@ -97,14 +100,14 @@ function Dashboard({
     const firstLetterCode = cat.stickers.find(code => /^[A-Z]+/.test(code));
     if (firstLetterCode) {
       const match = firstLetterCode.match(/^[A-Z]+/);
-      return match ? match[0] : '';
+      if (match) return match[0];
     }
     return '';
   };
 
   const getFormattedWishlistText = () => {
     const lines = [];
-    CATEGORIES.forEach(cat => {
+    filteredCategories.forEach(cat => {
       const missing = cat.stickers.filter(code => !collection[code] || collection[code].status !== 'collected');
       if (missing.length > 0) {
         const emoji = getCategoryEmoji(cat.flag);
@@ -121,7 +124,7 @@ function Dashboard({
 
   const getFormattedRepeatedText = () => {
     const lines = [];
-    CATEGORIES.forEach(cat => {
+    filteredCategories.forEach(cat => {
       const reps = cat.stickers.filter(code => collection[code]?.repeated > 0);
       if (reps.length > 0) {
         const emoji = getCategoryEmoji(cat.flag);
@@ -137,52 +140,7 @@ function Dashboard({
     return lines.join('\n');
   };
 
-  const getScientificEstimate = () => {
-    const N = stats.total || 994;
-    const coladas = stats.coladas;
-    const packetPrice = settings?.packetPrice || 4.00;
-    const stickersPerPack = 7; // 7 stickers per pack
-    
-    let remainingPacks = 0;
-    let directCost = 0;
-    
-    // 1. Lone Collector Strategy (CCP 100% completion)
-    let harmonicCCP = 0;
-    const missing = N - coladas;
-    for (let i = 1; i <= missing; i++) {
-      harmonicCCP += 1 / i;
-    }
-    const expectedPacksCCP = Math.ceil((N * harmonicCCP) / stickersPerPack);
-    
-    if (financeStrategy === 'ccp') {
-      remainingPacks = expectedPacksCCP;
-    } 
-    // 2. Cooperative Strategy (Group size K)
-    else {
-      const expectedTotalStickers = N * (1 + (Math.log(N) - 1.2) / financeGroupSize);
-      const totalStickersBought = coladas + stats.repetidas;
-      remainingPacks = Math.max(0, Math.ceil((expectedTotalStickers - totalStickersBought) / stickersPerPack));
-    }
-    
-    const remainingPacksCost = remainingPacks * packetPrice;
-    const remainingCost = remainingPacksCost + directCost;
-    
-    const ccpRemainingCost = expectedPacksCCP * packetPrice;
-    const savings = Math.max(0, ccpRemainingCost - remainingCost);
-    
-    return {
-      remainingPacks,
-      remainingCost,
-      savings,
-      totalCost: (packets * packetPrice) + remainingCost
-    };
-  };
 
-  const sciEstimate = getScientificEstimate();
-  const remainingCost = sciEstimate.remainingCost;
-  const totalCost = sciEstimate.totalCost;
-  const remainingPacks = sciEstimate.remainingPacks;
-  const savings = sciEstimate.savings;
 
   // States for Modals
   const [isCompareOpen, setIsCompareOpen] = useState(false);
@@ -300,9 +258,7 @@ function Dashboard({
     };
   }, [isScanning]);
 
-  const pricePerSticker = ((settings?.packetPrice || 0) / 7).toFixed(2);
-  const totalInvested = (packets * (settings?.packetPrice || 0)).toFixed(2);
-  const currencySymbol = settings?.country === 'BR' ? 'R$' : '$';
+
 
   const handleUpdateRepeated = (code, delta) => {
     const current = collection[code] || { status: 'none', repeated: 0 };
@@ -537,7 +493,7 @@ function Dashboard({
   const summaryRef = React.useRef(null);
 
   const getTopTeam = () => {
-    const teams = CATEGORIES.filter(c => c.group.startsWith('Grupo'));
+    const teams = filteredCategories.filter(c => c.group.startsWith('Grupo'));
     const teamStats = teams.map(cat => {
       const total = cat.stickers.length;
       const collected = cat.stickers.filter(code => collection[code] && collection[code].status === 'collected').length;
@@ -802,162 +758,7 @@ function Dashboard({
         </button>
       </div>
 
-      {/* Unified Logistics & Estimates */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Packets Card */}
-        <div className="glass-card p-4 border-l-4 border-l-secondary relative overflow-hidden group shadow-lg">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-            <ShoppingBag size={48} className="text-secondary" />
-          </div>
-          
-          <div className="flex justify-between items-start mb-3">
-            <div>
-              <p className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1">{t.packets}</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-text-color">{packets}</span>
-                <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter opacity-60">{t.opened}</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl">
-              <button 
-                onClick={() => onUpdatePackets(Math.max(0, packets - 1))}
-                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/20 active:bg-black/30 transition-all text-text-dim"
-              >
-                <Minus size={16} />
-              </button>
-              <button 
-                onClick={() => onUpdatePackets(packets + 1)}
-                className="w-10 h-10 flex items-center justify-center rounded-lg bg-secondary/20 hover:bg-secondary/30 active:scale-95 transition-all text-secondary"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
 
-          <div className="space-y-1.5 pt-3 border-t border-white/5">
-            <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.toBuyEst}</span>
-              <span className="text-[11px] font-black text-secondary">+{remainingPacks} {t.packetsDim}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.finalProjection}</span>
-              <span className="text-[11px] font-black text-text-color">{packets + remainingPacks} {t.packetsNormal}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Investment Card */}
-        <div className="glass-card p-4 border-l-4 border-l-primary relative overflow-hidden group shadow-lg">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <TrendingUp size={48} className="text-primary" />
-          </div>
-          
-          <div className="mb-3">
-            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{t.totalInvested}</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-text-color">{currencySymbol} {totalInvested}</span>
-              <span className="text-[10px] font-bold text-text-dim uppercase tracking-tighter opacity-60">{t.spent}</span>
-            </div>
-          </div>
-
-          <div className="space-y-1.5 pt-3 border-t border-white/5">
-            <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.toInvestEst}</span>
-              <span className="text-[11px] font-black text-primary">+{currencySymbol} {remainingCost.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest opacity-60">{t.finalTotalCost}</span>
-              <span className="text-[11px] font-black text-text-color">{currencySymbol} {totalCost.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Central de Economia Tática (Scientific Financial Simulator) */}
-      <div className="glass-card p-5 border border-white/5 relative overflow-hidden group shadow-lg bg-gradient-to-b from-white/5 to-transparent rounded-3xl">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-sm font-black text-text-color uppercase tracking-wider flex items-center gap-2">
-              <Calculator className="text-primary animate-pulse" size={16} />
-              {t.scientificFinanceTitle}
-            </h3>
-            <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-0.5">
-              {t.scientificFinanceSubtitle}
-            </p>
-          </div>
-        </div>
-
-        {/* Strategy Buttons */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-black/20 rounded-2xl border border-white/5 mb-4">
-          <button
-            onClick={() => setFinanceStrategy('ccp')}
-            className={`py-2 px-1 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all ${
-              financeStrategy === 'ccp' ? 'bg-primary text-white shadow-md font-bold' : 'text-text-dim hover:text-text-color'
-            }`}
-          >
-            {t.strategyCCP}
-          </button>
-          <button
-            onClick={() => setFinanceStrategy('coop')}
-            className={`py-2 px-1 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all ${
-              financeStrategy === 'coop' ? 'bg-secondary text-white shadow-md font-bold' : 'text-text-dim hover:text-text-color'
-            }`}
-          >
-            {t.strategyCoop}
-          </button>
-        </div>
-
-        {/* Dynamic Controls based on selected Strategy */}
-        <div className="mb-4">
-          {financeStrategy === 'coop' && (
-            <div className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
-              <span className="text-[10px] font-black text-text-dim uppercase tracking-wider">
-                {t.groupSize}:
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setFinanceGroupSize(prev => Math.max(2, prev - 1))}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 text-text-color font-bold text-xs"
-                >
-                  -
-                </button>
-                <span className="text-xs font-black text-text-color min-w-[70px] text-center">
-                  {financeGroupSize} {t.people}
-                </span>
-                <button
-                  onClick={() => setFinanceGroupSize(prev => Math.min(10, prev + 1))}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 text-text-color font-bold text-xs"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Scientific Explanation block */}
-        <div className="p-3 bg-black/20 rounded-xl border border-white/5 flex gap-2.5 items-start mb-4">
-          <Info size={14} className="text-primary shrink-0 mt-0.5" />
-          <p className="text-[10px] text-text-dim font-bold leading-normal uppercase">
-            {financeStrategy === 'ccp' && t.ccpExplanation}
-            {financeStrategy === 'coop' && t.coopExplanation}
-          </p>
-        </div>
-
-        {/* Savings Metric (If any) */}
-        {financeStrategy !== 'ccp' && savings > 0 && (
-          <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl flex justify-between items-center animate-fade-in">
-            <span className="text-[10px] font-black text-primary uppercase tracking-wider flex items-center gap-1">
-              <TrendingUp size={12} />
-              {t.economy}:
-            </span>
-            <span className="text-xs font-black text-primary">
-              {currencySymbol} {savings.toFixed(2)}
-            </span>
-          </div>
-        )}
-      </div>
 
       {/* Wishlist Modal */}
       <AnimatePresence>
@@ -1547,9 +1348,9 @@ function Dashboard({
                     <div className="absolute -right-2 -top-2 opacity-10 group-hover:opacity-20 transition-opacity">
                       <LayoutGrid size={40} className="text-white" />
                     </div>
-                    <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1 leading-tight">FWC + Coca</p>
+                    <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1 leading-tight">{isExcludeCoca ? 'FWC' : 'FWC + Coca'}</p>
                     {(() => {
-                      const specials = CATEGORIES.filter(c => !c.group.startsWith('Grupo'));
+                      const specials = filteredCategories.filter(c => !c.group.startsWith('Grupo'));
                       const total = specials.flatMap(c => c.stickers).length;
                       const collected = specials.flatMap(c => c.stickers).filter(code => collection[code]?.status === 'collected').length;
                       return (

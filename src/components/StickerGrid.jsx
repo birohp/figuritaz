@@ -38,7 +38,7 @@ const TeamIcon = ({ team, isSpecial, t }) => {
   );
 };
 
-function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
+function StickerGrid({ user, collection, onUpdate, lang = 'pt', settings = {} }) {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,7 +87,12 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
   };
 
   // Get unique groups and ensure Special ones are at the top
-  const groups = [...new Set(CATEGORIES.map(c => c.group))].sort((a, b) => {
+  const isExcludeCoca = settings?.excludeCoca === true;
+  const filteredCategories = isExcludeCoca 
+    ? CATEGORIES.filter(c => c.id !== 'coca-cola') 
+    : CATEGORIES;
+
+  const groups = [...new Set(filteredCategories.map(c => c.group))].sort((a, b) => {
     if (a === 'FIFA World Cup') return -1;
     if (b === 'FIFA World Cup') return 1;
     if (a === 'Coca-Cola') return -1;
@@ -95,8 +100,8 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
     return a.localeCompare(b);
   });
 
-  const categoriesInGroup = selectedGroup ? CATEGORIES.filter(c => c.group === selectedGroup) : [];
-  const currentCategory = CATEGORIES.find(c => c.id === selectedCategory);
+  const categoriesInGroup = selectedGroup ? filteredCategories.filter(c => c.group === selectedGroup) : [];
+  const currentCategory = filteredCategories.find(c => c.id === selectedCategory);
 
   let filteredStickers = searchTerm
     ? ALL_VALID_CODES.filter(code => code.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -117,82 +122,8 @@ function StickerGrid({ user, collection, onUpdate, lang = 'pt' }) {
     const firstInGroup = CATEGORIES.find(c => c.group === group);
     if (firstInGroup) setSelectedCategory(firstInGroup.id);
   };
-
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    return !localStorage.getItem('has_seen_onboarding');
-  });
-  const [dontShowAgain, setDontShowAgain] = useState(false);
-
-  const handleCloseOnboarding = () => {
-    setShowOnboarding(false);
-    if (dontShowAgain) {
-      localStorage.setItem('has_seen_onboarding', 'true');
-    }
-  };
-
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Onboarding Modal */}
-      <AnimatePresence>
-        {showOnboarding && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              className="glass-card w-full max-w-sm p-8 text-center space-y-6 border-2 border-primary/30 relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/20 blur-[60px] rounded-full pointer-events-none" />
-              
-              <div className="w-20 h-20 bg-primary rounded-full mx-auto flex items-center justify-center text-white shadow-lg shadow-primary/30 animate-bounce">
-                <Check size={40} strokeWidth={4} />
-              </div>
-
-              <div className="space-y-2">
-                <h2 className="text-2xl font-black text-text-color uppercase tracking-tight">{t.onboardingTitle}</h2>
-                <p className="text-xs text-text-dim leading-relaxed">
-                  {t.onboardingSubtitle}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 text-left">
-                <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
-                  <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-black shrink-0">1</div>
-                  <p className="text-[10px] font-medium text-text-color" dangerouslySetInnerHTML={{ __html: t.onboardingStep1 }} />
-                </div>
-                <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
-                  <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-[10px] font-black shrink-0">2</div>
-                  <p className="text-[10px] font-medium text-text-color" dangerouslySetInnerHTML={{ __html: t.onboardingStep2 }} />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center gap-2 py-2">
-                <button 
-                  onClick={() => setDontShowAgain(!dontShowAgain)}
-                  className="flex items-center gap-2 group cursor-pointer"
-                >
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${dontShowAgain ? 'bg-primary border-primary' : 'border-white/20 hover:border-white/40'}`}>
-                    {dontShowAgain && <Check size={14} strokeWidth={4} className="text-white" />}
-                  </div>
-                  <span className="text-[10px] font-bold text-text-dim group-hover:text-text-color transition-colors">{t.dontShowAgain}</span>
-                </button>
-              </div>
-
-              <button 
-                onClick={handleCloseOnboarding}
-                className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-sm active:scale-95 transition-all shadow-xl shadow-primary/20 hover:brightness-110"
-              >
-                {t.gotItCoach}
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Header / Search */}
       <div className="flex gap-2 items-center">
         {selectedGroup && !searchTerm && (

@@ -8,11 +8,16 @@ const IconMap = {
   Footprints, User, Award, Sparkles, Zap, Shield, Trophy, RefreshCcw, History, Flame, Target, Star, TrendingUp, Globe, UsersIcon: Users
 };
 
-function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedProp = [] }) {
+function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedProp = [], settings = {} }) {
   const t = translations[lang];
-  const currentUnlocked = getAchievements(collection);
+  const currentUnlocked = getAchievements(collection, settings);
   const unlockedAchievements = new Set([...unlockedProp, ...currentUnlocked]);
-  const progressMap = getAchievementProgress(collection);
+  const progressMap = getAchievementProgress(collection, settings);
+
+  const isExcludeCoca = settings?.excludeCoca === true;
+  const filteredAchievements = isExcludeCoca
+    ? ACHIEVEMENTS.filter(ach => ach.id !== 'coca_complete' && ach.id !== 'coca_fifa')
+    : ACHIEVEMENTS;
 
   // Global device tilt state for mobile accelerometer support
   const [deviceTilt, setDeviceTilt] = useState({ x: 0, y: 0, active: false });
@@ -99,7 +104,7 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
               <span className="text-sm font-black text-text-color uppercase tracking-tight">{t.generalProgress}</span>
             </div>
             <span className="text-lg font-black text-primary">
-              {unlockedAchievements.size} / {ACHIEVEMENTS.length}
+              {unlockedAchievements.size} / {filteredAchievements.length}
             </span>
           </div>
           
@@ -107,7 +112,7 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
             <div className="h-3 bg-black/40 rounded-full overflow-hidden border border-white/5 p-0.5">
               <motion.div 
                 initial={{ width: 0 }}
-                animate={{ width: `${(unlockedAchievements.size / ACHIEVEMENTS.length) * 100}%` }}
+                animate={{ width: `${(unlockedAchievements.size / filteredAchievements.length) * 100}%` }}
                 className="h-full bg-gradient-to-r from-primary via-secondary to-primary bg-[length:200%_100%] animate-shimmer rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]"
               />
             </div>
@@ -116,7 +121,7 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
                 {t.careerStatus}
               </p>
               <p className="text-[10px] font-black text-text-color uppercase">
-                {Math.floor((unlockedAchievements.size / ACHIEVEMENTS.length) * 100)}% {t.completed}
+                {Math.floor((unlockedAchievements.size / filteredAchievements.length) * 100)}% {t.completed}
               </p>
             </div>
           </div>
@@ -125,7 +130,7 @@ function Achievements({ collection, lang = 'pt', unlockedAchievements: unlockedP
 
       {/* Grid of Interactive 3D Achievement Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {ACHIEVEMENTS.map(ach => {
+        {filteredAchievements.map(ach => {
           const isUnlocked = unlockedAchievements.has(ach.id);
           const Icon = IconMap[ach.icon] || IconMap.UsersIcon || Award;
           const prog = progressMap[ach.id] || { current: 0, target: 1 };

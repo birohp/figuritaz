@@ -2,6 +2,7 @@ export const translations = {
   pt: {
     dashboard: "Dashboard",
     album: "Álbum",
+    finance: "Financeiro",
     vision: "VISÃO TÁTICA",
     progress: "PROGRESSO DA CAMPANHA",
     coladas: "Coladas",
@@ -19,6 +20,7 @@ export const translations = {
     shinyRank: "FiguritaZ Brilhantes",
     language: "Idioma",
     boardColor: "Cor da Lousa",
+    excludeCoca: "Ocultar figurinhas da Coca-Cola",
     logout: "Sair",
     close: "Fechar",
     filterAll: "Todas",
@@ -154,6 +156,40 @@ export const translations = {
     onboardingStep2: "Use o <b>+ e -</b> na base da figurinha para gerenciar suas <b>repetidas</b>.",
     dontShowAgain: "Não mostrar novamente",
     gotItCoach: "Entendido, Professor!",
+    reactivateOnboarding: "Reativar Instruções Táticas",
+    onboardingReactivated: "Instruções táticas reativadas para todas as telas!",
+    onboarding: {
+      dashboard: {
+        title: "Instrução Tática: Dashboard",
+        subtitle: "Seu centro de comando da campanha. Analise as manobras rápidas:",
+        step1: "Acompanhe o <b>percentual de progresso</b> e o saldo total de figurinhas.",
+        step2: "Acesse atalhos rápidos para <b>Wishlist, Repetidas</b> e inicie <b>Trocas em Nuvem</b>."
+      },
+      collection: {
+        title: "Instrução Tática: Álbum",
+        subtitle: "Para organizar sua campanha e conquistar o título, siga estas manobras:",
+        step1: "Toque no <b>número da figurinha</b> para colá-la no seu álbum.",
+        step2: "Use o <b>+ e -</b> na base da figurinha para gerenciar suas <b>repetidas</b>."
+      },
+      finance: {
+        title: "Instrução Tática: Financeiro",
+        subtitle: "Planeje seus gastos e economias com modelos probabilísticos:",
+        step1: "Monitore o <b>custo unitário real</b> e compare com o preço nominal de compra.",
+        step2: "Simule estratégias para descobrir quando parar de comprar pacotinhos e <b>focar em trocas</b>."
+      },
+      stats: {
+        title: "Instrução Tática: Estatísticas",
+        subtitle: "Analise o desempenho e entrosamento da sua coleção:",
+        step1: "Descubra as <b>seleções e grupos</b> mais próximos da conclusão.",
+        step2: "Acompanhe o rendimento de <b>figurinhas brilhantes e sessões especiais</b>."
+      },
+      achievements: {
+        title: "Instrução Tática: Conquistas",
+        subtitle: "Sua galeria de conquistas táticas como colecionador profissional:",
+        step1: "Acompanhe o progresso de <b>desafios exclusivos</b> da sua jornada.",
+        step2: "Interaja com os <b>cards holográficos 3D</b> das suas medalhas desbloqueadas."
+      }
+    },
     shinyDescription: "Inclui todos os FWC e os nº 1 de cada país",
     startCollectionStats: "Inicie sua coleção para ver estatísticas detalhadas.",
     noDuplicatesYet: "Nenhuma repetida ainda.",
@@ -227,7 +263,8 @@ export const translations = {
       euro_complete: { name: "Euro Soberano", desc: "Complete as seleções da Europa" },
       world_champions: { name: "Clube dos Campeões", desc: "Complete as 7 seleções campeãs mundiais do álbum" },
       world_tour: { name: "Volta ao Mundo", desc: "Cole figurinhas de 5 continentes" },
-      repescagem_complete: { name: "Guerreiros da Repescagem", desc: "Complete as 6 seleções da repescagem mundial da Copa 2026 (CZE, BIH, TUR, SWE, IRQ, COD)" }
+      repescagem_complete: { name: "Guerreiros da Repescagem", desc: "Complete as 6 seleções da repescagem mundial da Copa 2026 (CZE, BIH, TUR, SWE, IRQ, COD)" },
+      hosts_complete: { name: "Anfitriões da Copa", desc: "Complete as seleções anfitriãs: México, Canadá e Estados Unidos" }
     },
     groupLabel: "Grupo",
     copyTradeSummary: "Copiar Resumo da Troca 📱",
@@ -290,6 +327,7 @@ export const translations = {
   en: {
     dashboard: "Dashboard",
     album: "Album",
+    finance: "Finance",
     vision: "TACTICAL VISION",
     progress: "CAMPAIGN PROGRESS",
     coladas: "Stuck",
@@ -307,6 +345,7 @@ export const translations = {
     shinyRank: "Shiny Stickers",
     language: "Language",
     boardColor: "Board Color",
+    excludeCoca: "Exclude Coca-Cola stickers",
     logout: "Logout",
     close: "Close",
     filterAll: "All",
@@ -442,6 +481,40 @@ export const translations = {
     onboardingStep2: "Use the <b>+ and -</b> at the bottom of the sticker to manage your <b>duplicates</b>.",
     dontShowAgain: "Don't show again",
     gotItCoach: "Got it, Coach!",
+    reactivateOnboarding: "Reactivate Tactical Instructions",
+    onboardingReactivated: "Tactical instructions reactivated for all screens!",
+    onboarding: {
+      dashboard: {
+        title: "Tactical Instruction: Dashboard",
+        subtitle: "Your campaign command center. Track these key metrics:",
+        step1: "Monitor your <b>progress percentage</b> and total sticker counts.",
+        step2: "Use quick shortcuts for <b>Wishlists, Duplicates</b> and start <b>Cloud Swaps</b>."
+      },
+      collection: {
+        title: "Tactical Instruction: Album",
+        subtitle: "To organize your campaign and conquer the title, follow these moves:",
+        step1: "Tap the <b>sticker number</b> to stick it in your album.",
+        step2: "Use the <b>+ and -</b> keys to manage your <b>duplicates</b>."
+      },
+      finance: {
+        title: "Tactical Instruction: Finance",
+        subtitle: "Optimize your expenses using math and models:",
+        step1: "Track your <b>real average cost</b> compared to nominal pricing.",
+        step2: "Simulate strategies to decide when to stop buying and <b>start trading</b>."
+      },
+      stats: {
+        title: "Tactical Instruction: Stats",
+        subtitle: "Deeply analyze the chemistry of your album:",
+        step1: "Discover which <b>groups and countries</b> are near completion.",
+        step2: "Check out yields for <b>shiny stickers</b> and special sections."
+      },
+      achievements: {
+        title: "Tactical Instruction: Achievements",
+        subtitle: "Your professional collection career trophies:",
+        step1: "Track the progress of <b>exclusive challenges</b> on your path.",
+        step2: "Tilt or hover to interact with <b>3D holographic cards</b> for unlocked trophies."
+      }
+    },
     shinyDescription: "Includes all FWC and #1 from each country",
     startCollectionStats: "Start your collection to see detailed statistics.",
     noDuplicatesYet: "No duplicates yet.",
@@ -515,7 +588,8 @@ export const translations = {
       euro_complete: { name: "Euro Sovereign", desc: "Complete European teams" },
       world_champions: { name: "Champions Club", desc: "Complete the 7 world champion teams in the album" },
       world_tour: { name: "World Tour", desc: "Stick stickers from 5 continents" },
-      repescagem_complete: { name: "Play-off Heroes", desc: "Complete the 6 teams from the 2026 World Cup play-offs (CZE, BIH, TUR, SWE, IRQ, COD)" }
+      repescagem_complete: { name: "Play-off Heroes", desc: "Complete the 6 teams from the 2026 World Cup play-offs (CZE, BIH, TUR, SWE, IRQ, COD)" },
+      hosts_complete: { name: "World Cup Hosts", desc: "Complete the host teams: Mexico, Canada, and United States" }
     },
     groupLabel: "Group",
     copyTradeSummary: "Copy Swap Summary 📱",
@@ -578,6 +652,7 @@ export const translations = {
   es: {
     dashboard: "Dashboard",
     album: "Álbum",
+    finance: "Finanzas",
     vision: "VISIÓN TÁCTICA",
     progress: "PROGRESO DE LA CAMPAÑA",
     coladas: "Pegadas",
@@ -595,6 +670,7 @@ export const translations = {
     shinyRank: "FiguritaZ Brillantes",
     language: "Idioma",
     boardColor: "Color de la Pizarra",
+    excludeCoca: "Ocultar figuritas de Coca-Cola",
     logout: "Salir",
     close: "Cerrar",
     filterAll: "Todas",
@@ -730,6 +806,40 @@ export const translations = {
     onboardingStep2: "Usa el <b>+ y -</b> en la base de la figurita para gestionar tus <b>repetidas</b>.",
     dontShowAgain: "No mostrar de nuevo",
     gotItCoach: "¡Entendido, Entrenador!",
+    reactivateOnboarding: "Reactivar Instrucciones Tácticas",
+    onboardingReactivated: "¡Instrucciones tácticas reactivadas para todas las pantallas!",
+    onboarding: {
+      dashboard: {
+        title: "Instrucción Táctica: Dashboard",
+        subtitle: "Tu centro de mando. Analiza las maniobras rápidas:",
+        step1: "Sigue el <b>porcentaje de progreso</b> y el total de figuritas.",
+        step2: "Usa atajos rápidos para <b>Wishlists, Repetidas</b> e inicia <b>Intercambios en la Nube</b>."
+      },
+      collection: {
+        title: "Instrucción Táctica: Álbum",
+        subtitle: "Para organizar tu campaña y ganar el título, sigue estos pasos:",
+        step1: "Toca el <b>número de la figurita</b> para pegarla en tu álbum.",
+        step2: "Usa <b>+ y -</b> en la base para gestionar tus <b>repetidas</b>."
+      },
+      finance: {
+        title: "Instrucción Táctica: Finanzas",
+        subtitle: "Planifica tus gastos y ahorros con modelos avanzados:",
+        step1: "Monitorea el <b>costo unitario real</b> frente al costo nominal.",
+        step2: "Simula estrategias óptimas para saber cuándo enfocarse en <b>intercambios</b>."
+      },
+      stats: {
+        title: "Instrucción Táctica: Estadísticas",
+        subtitle: "Analiza el rendimiento y química de tu colección:",
+        step1: "Encuentra cuáles <b>selecciones y grupos</b> están casi listos.",
+        step2: "Sigue el porcentaje de <b>figuritas brillantes</b> y secciones especiales."
+      },
+      achievements: {
+        title: "Instrucción Táctica: Logros",
+        subtitle: "Tu vitrina de trofeos de coleccionista profesional:",
+        step1: "Sigue el progreso de los <b>desafíos exclusivos</b> de tu carrera.",
+        step2: "Interactúa con las <b>tarjetas holográficas 3D</b> inclinando o pasando el mouse."
+      }
+    },
     shinyDescription: "Incluye todos los FWC y los nº 1 de cada país",
     startCollectionStats: "Inicie su colección para ver estadísticas detalladas.",
     noDuplicatesYet: "Ninguna repetida aún.",
@@ -803,7 +913,8 @@ export const translations = {
       euro_complete: { name: "Euro Soberano", desc: "Completa las selecciones de Europa" },
       world_champions: { name: "Club de Campeones", desc: "Completa las 7 selecciones campeonas mundiales del álbum" },
       world_tour: { name: "Vuelta al Mundo", desc: "Pega figuritas de 5 continentes" },
-      repescagem_complete: { name: "Héroes del Repechaje", desc: "Completa las 6 selecciones del repechaje mundial de la Copa 2026 (CZE, BIH, TUR, SWE, IRQ, COD)" }
+      repescagem_complete: { name: "Héroes del Repechaje", desc: "Completa las 6 selecciones del repechaje mundial de la Copa 2026 (CZE, BIH, TUR, SWE, IRQ, COD)" },
+      hosts_complete: { name: "Anfitriones del Mundial", desc: "Completa las selecciones anfitrionas: México, Canadá y Estados Unidos" }
     },
     groupLabel: "Grupo",
     copyTradeSummary: "Copiar Resumen del Intercambio 📱",

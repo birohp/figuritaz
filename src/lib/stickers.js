@@ -62,17 +62,31 @@ export const SHINY_CODES = ALL_VALID_CODES.filter(code => {
   return /^[A-Z]{3}1$/.test(code);
 });
 
-export const calculateStats = (collection) => {
-  const total = TOTAL_STICKERS;
-  const collected = Object.entries(collection).filter(([_, s]) => s.status === 'collected');
+export const calculateStats = (collection, settings = {}) => {
+  const excludeCoca = settings?.excludeCoca === true;
+  
+  // Calculate total stickers and valid codes dynamically
+  const categoriesToCount = excludeCoca 
+    ? CATEGORIES.filter(cat => cat.id !== 'coca-cola') 
+    : CATEGORIES;
+  const stickersToCount = categoriesToCount.flatMap(cat => cat.stickers);
+  const total = stickersToCount.length;
+  
+  const collected = Object.entries(collection)
+    .filter(([code, s]) => s.status === 'collected' && stickersToCount.includes(code));
   const coladas = collected.length;
-  const repetidas = Object.values(collection).reduce((acc, s) => acc + (s.repeated || 0), 0);
+  
+  const repetidas = Object.entries(collection)
+    .filter(([code]) => stickersToCount.includes(code))
+    .reduce((acc, [_, s]) => acc + (s.repeated || 0), 0);
+    
   const faltando = total - coladas;
   const porcentagem = total > 0 ? ((coladas / total) * 100).toFixed(1) : 0;
 
   // Brilhantes
-  const totalBrilhantes = SHINY_CODES.length;
-  const coladasBrilhantes = collected.filter(([code]) => SHINY_CODES.includes(code)).length;
+  const includedShiny = SHINY_CODES.filter(code => stickersToCount.includes(code));
+  const totalBrilhantes = includedShiny.length;
+  const coladasBrilhantes = collected.filter(([code]) => includedShiny.includes(code)).length;
   const porcentagemBrilhantes = totalBrilhantes > 0 ? ((coladasBrilhantes / totalBrilhantes) * 100).toFixed(1) : 0;
 
   return { 
@@ -118,11 +132,12 @@ export const ACHIEVEMENTS = [
   { id: 'euro_complete', name: 'Euro Soberano', description: 'Complete as seleções da Europa', icon: 'Shield' },
   { id: 'world_champions', name: 'Clube dos Campeões', description: 'Complete as 7 seleções campeãs mundiais do álbum', icon: 'Trophy' },
   { id: 'world_tour', name: 'Volta ao Mundo', description: 'Cole figurinhas de 5 continentes', icon: 'Globe' },
-  { id: 'repescagem_complete', name: 'Guerreiros da Repescagem', description: 'Complete as 6 seleções da repescagem mundial da Copa 2026', icon: 'History' }
+  { id: 'repescagem_complete', name: 'Guerreiros da Repescagem', description: 'Complete as 6 seleções da repescagem mundial da Copa 2026', icon: 'History' },
+  { id: 'hosts_complete', name: 'Anfitriões da Copa', description: 'Complete as seleções anfitriãs: México, Canadá e Estados Unidos', icon: 'Globe' }
 ];
 
-export const getAchievements = (collection) => {
-  const stats = calculateStats(collection);
+export const getAchievements = (collection, settings = {}) => {
+  const stats = calculateStats(collection, settings);
   
   const unlocked = new Set();
 
@@ -155,7 +170,11 @@ export const getAchievements = (collection) => {
   // Check if any team is complete
   let completeTeams = 0;
   let hasFromAll = true;
-  for (const cat of CATEGORIES) {
+  const categoriesToCheck = settings?.excludeCoca === true
+    ? CATEGORIES.filter(c => c.id !== 'coca-cola')
+    : CATEGORIES;
+
+  for (const cat of categoriesToCheck) {
     const collectedInCat = cat.stickers.filter(code => collection[code]?.status === 'collected');
     if (collectedInCat.length === 0) hasFromAll = false;
     
@@ -239,11 +258,17 @@ export const getAchievements = (collection) => {
   );
   if (playoffComplete) unlocked.add('repescagem_complete');
 
+  // Hosts complete (México, Canadá, Estados Unidos)
+  const mexComplete = CATEGORIES.find(c => c.id === 'méxico')?.stickers.every(code => collection[code]?.status === 'collected');
+  const canComplete = CATEGORIES.find(c => c.id === 'canadá')?.stickers.every(code => collection[code]?.status === 'collected');
+  const usaComplete = CATEGORIES.find(c => c.id === 'estados_unidos')?.stickers.every(code => collection[code]?.status === 'collected');
+  if (mexComplete && canComplete && usaComplete) unlocked.add('hosts_complete');
+
   return unlocked;
 };
 
-export const getAchievementProgress = (collection) => {
-  const stats = calculateStats(collection);
+export const getAchievementProgress = (collection, settings = {}) => {
+  const stats = calculateStats(collection, settings);
   const progress = {};
 
   const wcBrStickers = CATEGORIES.find(c => c.id === 'brasil')?.stickers || [];
@@ -297,7 +322,10 @@ export const getAchievementProgress = (collection) => {
 
   let completeTeams = 0;
   let categoriesWithStickers = 0;
-  for (const cat of CATEGORIES) {
+  const categoriesToCheckProgress = settings?.excludeCoca === true
+    ? CATEGORIES.filter(c => c.id !== 'coca-cola')
+    : CATEGORIES;
+  for (const cat of categoriesToCheckProgress) {
     const collectedInCat = cat.stickers.filter(code => collection[code]?.status === 'collected');
     if (collectedInCat.length > 0) categoriesWithStickers++;
     if (collectedInCat.length === cat.stickers.length) completeTeams++;
@@ -305,7 +333,7 @@ export const getAchievementProgress = (collection) => {
 
   progress['team_complete'] = { current: completeTeams, target: 1 };
   progress['master_teams'] = { current: completeTeams, target: 10 };
-  progress['globetrotter'] = { current: categoriesWithStickers, target: CATEGORIES.length };
+  progress['globetrotter'] = { current: categoriesWithStickers, target: categoriesToCheckProgress.length };
   
   const codes13 = ALL_VALID_CODES.filter(code => code.endsWith('13'));
   const collected13 = codes13.filter(code => collection[code]?.status === 'collected');
@@ -336,7 +364,7 @@ export const getAchievementProgress = (collection) => {
     }
     else if (collectedInGroup > maxGroupProgress) maxGroupProgress = collectedInGroup;
   }
-  progress['group_complete'] = { current: completeTeams > 0 ? 1 : 0, target: 1 }; // Simplified or could be more complex
+  progress['group_complete'] = { current: completeGroups >= 1 ? 1 : 0, target: 1 };
   progress['first_100_percent_group'] = { current: completeGroups, target: 3 };
 
   // Euro complete progress
@@ -383,6 +411,14 @@ export const getAchievementProgress = (collection) => {
     }
   });
   progress['repescagem_complete'] = { current: playoffCollected, target: playoffTotal };
+
+  // Hosts complete progress
+  const mexStickers = CATEGORIES.find(c => c.id === 'méxico')?.stickers || [];
+  const canStickers = CATEGORIES.find(c => c.id === 'canadá')?.stickers || [];
+  const usaStickers = CATEGORIES.find(c => c.id === 'estados_unidos')?.stickers || [];
+  const hostsTotalStickers = [...mexStickers, ...canStickers, ...usaStickers];
+  const hostsCollected = hostsTotalStickers.filter(code => collection[code]?.status === 'collected').length;
+  progress['hosts_complete'] = { current: hostsCollected, target: hostsTotalStickers.length };
 
   return progress;
 };

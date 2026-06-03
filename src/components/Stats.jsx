@@ -7,19 +7,20 @@ import {
 
 function Stats({ collection, lang = 'pt', settings }) {
   const t = translations[lang];
-  const stats = calculateStats(collection);
+  const stats = calculateStats(collection, settings);
   
   const estimate = calculateCompletionEstimate(stats.coladas, stats.total);
   const remainingCost = estimate.remaining * (settings?.packetPrice || 4.00);
   const totalCost = estimate.total * (settings?.packetPrice || 4.00);
   const currencySymbol = settings?.country === 'BR' ? 'R$' : '$';
 
-  // Calculate stats per category (Individual Sections)
-// ... (omitted same as before)
-// ... (I'll just replace the start of the function)
+  const isExcludeCoca = settings?.excludeCoca === true;
+  const filteredCategories = isExcludeCoca 
+    ? CATEGORIES.filter(c => c.id !== 'coca-cola') 
+    : CATEGORIES;
 
   // Calculate stats per category (Individual Sections)
-  const categoryStats = CATEGORIES.map(cat => {
+  const categoryStats = filteredCategories.map(cat => {
     const total = cat.stickers.length;
     const collected = cat.stickers.filter(code => collection[code] && collection[code].status === 'collected').length;
     const percent = total > 0 ? (collected / total) * 100 : 0;
@@ -27,9 +28,9 @@ function Stats({ collection, lang = 'pt', settings }) {
   });
 
   // Calculate stats per group (Aggregate)
-  const groupNames = [...new Set(CATEGORIES.map(c => c.group))];
+  const groupNames = [...new Set(filteredCategories.map(c => c.group))];
   const groupStats = groupNames.map(groupName => {
-    const catsInGroup = CATEGORIES.filter(c => c.group === groupName);
+    const catsInGroup = filteredCategories.filter(c => c.group === groupName);
     const allStickers = catsInGroup.flatMap(c => c.stickers);
     const flags = catsInGroup.map(c => c.flag).filter(f => f && f !== 'fifa' && f !== 'coca');
     const total = allStickers.length;
