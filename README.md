@@ -25,6 +25,17 @@
 - **Backend**: Firebase (Authentication, Cloud Firestore, Hosting)
 - **Ícones**: Lucide React
 - **Animações**: Framer Motion
+- **Age Signals**: `@capawesome/capacitor-age-signals` (Play Age Signals no Android / DeclaredAgeRange no iOS) — ver seção abaixo
+
+## 🔞 Play Age Signals (verificação de idade)
+
+O app usa a [Play Age Signals API](https://developer.android.com/google/play/age-signals/) para receber a faixa etária do usuário (0–12, 13–15, 16–17, 18+) sem coletar data de nascimento. No Brasil o compartilhamento do sinal passa a ser obrigatório em **janeiro de 2027** (ECA Digital, Lei 15.211/2025).
+
+- **Onde**: `src/lib/ageSignals.js` — `requestAgeSignals()` é chamado uma vez por sessão após o login, somente no app nativo (Android/iOS). Na web não faz nada.
+- **Armazenamento**: somente em `localStorage` (`age_signals`). O sinal **nunca** vai para o Firestore, analytics ou anúncios.
+- **Ponto de decisão**: `isUnder18()` em `src/App.jsx` (ver comentário `PLAY AGE SIGNALS: UNDER-18 BRANCH POINT`) — o comportamento para menores de 18 anos ainda será definido; hoje nada muda na experiência.
+- **Teste**: em builds de debug, use `AgeSignals.setUseFakeManager({ useFake: true })` com o `FakeAgeSignalsManager` para simular faixas etárias; para testar com a API real, adicione a conta Google como *license tester* no Play Console (o app precisa estar instalado via Play, `APP_NOT_OWNED` bloqueia builds sideload sem isso).
+- **Pendente (iOS)**: para o DeclaredAgeRange funcionar no iOS, falta habilitar o entitlement `com.apple.developer.declared-age-range` no projeto Xcode (o Android já está completo).
 
 ## 🚀 Como Rodar Localmente
 
