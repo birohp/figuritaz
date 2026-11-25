@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { auth, googleProvider, db } from './lib/firebase';
+import { requestAgeSignals, refreshAgeSignals, getStoredAgeSignals, isUnder18 } from './lib/ageSignals';
 import { GoogleAuthProvider, signInWithCredential, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
@@ -21,6 +22,11 @@ import { App as CapApp } from '@capacitor/app';
 
 function App() {
   const [user, setUser] = useState(null);
+
+  // Play Age Signals: last age range shared by the user (local only,
+  // see src/lib/ageSignals.js). Initialized from localStorage.
+  const [ageSignals, setAgeSignals] = useState(() => getStoredAgeSignals());
+  const ageSignalsRequestedRef = useRef(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -315,6 +321,25 @@ function App() {
     };
   }, []);
 
+  // Play Age Signals: request the age range once per session after login
+  // (native app only). The result is stored locally (localStorage) and
+  // never sent anywhere — see src/lib/ageSignals.js.
+  useEffect(() => {
+    if (!user || !Capacitor.isNativePlatform()) return;
+    if (ageSignalsRequestedRef.current) return;
+    ageSignalsRequestedRef.current = true;
+
+    (async () => {
+      const stored = getStoredAgeSignals();
+      // Already shared before: re-read silently (no prompt) so a
+      // significant change approved by a parent is picked up.
+      const result = stored?.status === 'SHARED'
+        ? (await refreshAgeSignals()) ?? stored
+        : await requestAgeSignals();
+      if (result) setAgeSignals(result);
+    })();
+  }, [user]);
+
   // Firebase Listener & Initial Sync
   useEffect(() => {
     if (!user) return;
@@ -465,6 +490,28 @@ function App() {
 
   const handleLogout = () => signOut(auth);
 
+  // ─── PLAY AGE SIGNALS: UNDER-18 BRANCH POINT ─────────────────────────
+  // `isUserUnder18` is true when Play shared an age range below 18, false
+  // when the user is 18+, and null when no age range was shared (web build,
+  // user declined, verification pending in the Play Store, or API
+  // unavailable). The age-appropriate behavior for under-18 users is a
+  // product decision still to be made by Tarcisio — nothing branches on
+  // it yet on purpose. Surfaces that will read this flag when the
+  // behavior is chosen:
+  //   - Trade with other collectors: Dashboard reads another user's
+  //     Firestore doc (displayName/email) via the ?trade= link.
+  //   - Achievement sharing: AchievementShare opens the system share sheet.
+  //   - Donation prompt (Pix/CLABE) in the Settings modal.
+  //   - Future ads: AdBanner is a placeholder today; any AdMob integration
+  //     must stay free of personalized ads for under-18 users — the ads
+  //     gate is implemented: AdBanner renders nothing for under-18 users
+  //     (see src/components/AdBanner.jsx, getAdRequestConfig for the
+  //     future non-personalized-ads hook).
+  // The signal lives only in localStorage — never write it to Firestore,
+  // analytics, or ads (see src/lib/ageSignals.js).
+  const isUserUnder18 = isUnder18(ageSignals);
+  const ageBand = ageSignals?.status === 'SHARED' ? (isUserUnder18 ? 'under-18' : 'adult') : 'unknown';
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -474,7 +521,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col pb-24">
+    <div className="min-h-screen flex flex-col pb-24" data-age-band={ageBand}>
       {/* Header */}
       <header className="p-4 flex justify-between items-center glass-card m-4 mb-0 rounded-3xl">
         <div className="flex items-center gap-3">
@@ -563,7 +610,7 @@ function App() {
         </AnimatePresence>
       </main>
 
-      <AdBanner lang={settings.lang} />
+      <AdBanner lang={settings.lang} isUnder18={isUserUnder18} />
 
       <AchievementShare collection={collection} lang={settings.lang} />
 

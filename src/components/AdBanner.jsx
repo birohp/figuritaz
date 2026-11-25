@@ -1,7 +1,21 @@
 import React from 'react';
 import { translations } from '../lib/translations';
 
-const AdBanner = ({ lang = 'pt' }) => {
+// ─── PLAY AGE SIGNALS: UNDER-18 ADS GATE ─────────────────────────────
+// Tarcisio chose the ads gate as the under-18 behavior (24 Nov 2026):
+// users under 18 get no ads at all. `isUnder18` comes from the Play Age
+// Signals flag in App.jsx — true when Play shared an age range below 18,
+// false when 18+, null when no age range was shared (web build, user
+// declined, verification pending, or API unavailable). Unknown is treated
+// like adult today: the banner is a placeholder with no real ad yet, so
+// there is nothing personalized to suppress. See src/lib/adsConsent.js
+// for the future AdMob non-personalized-ads hook.
+const AdBanner = ({ lang = 'pt', isUnder18 = null }) => {
+  // Under-18 users: no ad slot at all — not even the placeholder.
+  if (isUnder18 === true) {
+    return null;
+  }
+
   const t = translations[lang] || translations.pt;
 
   return (
